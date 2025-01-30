@@ -1,0 +1,72 @@
+#ifndef PIDCONTROLLER_H
+#define PIDCONTROLLER_H
+
+#include "Encoder.h"
+#include "stddef.h"
+
+#define SPEED_SAMPLE_BUFFER_LENGTH 10
+
+enum Mode
+{
+  OPEN_LOOP,
+  CLOSED_LOOP
+};
+
+class PidController
+{
+  public:
+    PidController(float K_p, float K_i, float K_d, Encoder *p_encoder, float update_time_s);
+    ~PidController() {}
+
+    float run_controller();
+    float get_current_speed_cps() const {return m_currrent_speed_cps;}
+    void set_target_speed(float target_speed);
+
+  private:
+    float m_update_time_s;
+    
+    float m_K_p;
+    float m_K_i;
+    float m_K_d;
+
+    float m_accumulated_error{0.};
+    float m_last_error{0.};
+
+    Mode m_mode{CLOSED_LOOP};
+
+    float m_target_speed_cps{0.};
+
+    // velocities are in units of encoder counts per second
+    float m_currrent_speed_cps{0.};
+    float m_speed_sample_buffer[SPEED_SAMPLE_BUFFER_LENGTH];
+
+    size_t m_speed_sample_buffer_ptr;
+
+    Encoder *m_p_encoder;
+
+    // calculate the instantaneous speed sample
+    float get_instantaneous_speed();
+
+    // update the filtered speed estimate
+    void update_current_speed();
+
+    // update accumulated error, clamping within a max range
+    void update_accumulated_error(float error);
+
+    static constexpr float MAX_ACCUMULATED_ERROR = 100.;
+
+    // motor parameters
+    static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
+    static constexpr uint32_t MOTOR_GEAR_RATIO = 380;
+    static constexpr float MAX_OUTPUT_SPEED_RPM = 84.;  // unloaded speed
+    static constexpr uint32_t MAX_CONTROL_VALUE = 255;  // equal to the maximum PWM duty cycle
+
+    // motor max speed, encoder counts per second
+    static constexpr float MAX_SPEED_CPS = MAX_OUTPUT_SPEED_RPM*static_cast<float>(MOTOR_GEAR_RATIO)*static_cast<float>(ENCODER_CPR)/3600.;
+
+    // the ratio of control signal to speed for open-loop unloaded operation
+    static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(MAX_CONTROL_VALUE)/MAX_SPEED_CPS;
+
+};
+
+#endif
