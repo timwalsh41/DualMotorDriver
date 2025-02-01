@@ -19,7 +19,7 @@ class Encoder
     // get_delta calculates the delta between the prior count and the current count. Note that for signed
     // integer types, rollover will be implicity handled here automatically as the subtraction across the
     // rollover boundary at the positive and negative limits will return the correct difference.
-    int32_t get_delta();
+    int32_t update_delta();
 
     void reset_count();
     int64_t get_count() const {return m_count;}

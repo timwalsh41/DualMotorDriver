@@ -1,8 +1,8 @@
+#include "Arduino.h"
 #include "PidController.h"
 
-PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder, float update_time_s) : 
-      m_p_encoder{p_encoder},
-      m_update_time_s{update_time_s}
+PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
+      m_p_encoder{p_encoder}
 {
   for (uint32_t i = 0; i < SPEED_SAMPLE_BUFFER_LENGTH; i++)
   {
@@ -55,13 +55,23 @@ void PidController::update_current_speed()
 // will update the last count, we should only call this once per update loop.
 float PidController::get_instantaneous_speed()
 {
-  return static_cast<float>(m_p_encoder->get_delta())/m_update_time_s;
+  uint32_t current_time_us = micros();
+  uint32_t time_delta_us;
+
+  // handle clock rollover
+  if (current_time_us < m_last_update_time_us)
+    time_delta_us = UINT32_MAX - m_last_update_time_us + current_time_us + 1;
+  else
+    time_delta_us = current_time_us - m_last_update_time_us;
+
+  m_last_update_time_us = current_time_us;
+  return static_cast<float>(m_p_encoder->update_delta())/static_cast<float>(time_delta_us)*1e6;
 }
 
 // When setting target speed, we'll clear the accumulated error
-void PidController::set_target_speed(float target_speed)
+void PidController::set_target_speed(float target_speed_cps)
 {
-  m_target_speed_cps = target_speed;
+  m_target_speed_cps = target_speed_cps;
   m_accumulated_error = 0;
 }
 
@@ -73,4 +83,10 @@ void PidController::update_accumulated_error(float error)
     m_accumulated_error = MAX_ACCUMULATED_ERROR;
   else if (m_accumulated_error < -MAX_ACCUMULATED_ERROR)
     m_accumulated_error = -MAX_ACCUMULATED_ERROR;
+}
+
+void PidController::set_mode(Mode mode)
+{
+  m_mode = mode;
+  set_target_speed(0);
 }

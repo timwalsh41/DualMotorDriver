@@ -15,15 +15,28 @@ enum Mode
 class PidController
 {
   public:
-    PidController(float K_p, float K_i, float K_d, Encoder *p_encoder, float update_time_s);
+    PidController(float K_p, float K_i, float K_d, Encoder *p_encoder);
     ~PidController() {}
 
     float run_controller();
     float get_current_speed_cps() const {return m_currrent_speed_cps;}
-    void set_target_speed(float target_speed);
+    void set_target_speed(float target_speed_cps);
+    void set_mode(Mode mode);
+
+    // motor parameters
+    static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
+    static constexpr uint32_t MOTOR_GEAR_RATIO = 380;
+    static constexpr float MAX_OUTPUT_SPEED_RPM = 84.;  // unloaded speed
+    static constexpr uint32_t MAX_CONTROL_VALUE = UINT8_MAX;  // equal to the maximum PWM duty cycle
+
+    // motor max speed, encoder counts per second
+    static constexpr float MAX_SPEED_CPS = MAX_OUTPUT_SPEED_RPM*static_cast<float>(MOTOR_GEAR_RATIO)*static_cast<float>(ENCODER_CPR)/3600.;
+
+    // the ratio of control signal to speed for open-loop unloaded operation
+    static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(MAX_CONTROL_VALUE)/MAX_SPEED_CPS;
 
   private:
-    float m_update_time_s;
+    uint32_t m_last_update_time_us{0};
     
     float m_K_p;
     float m_K_i;
@@ -54,19 +67,6 @@ class PidController
     void update_accumulated_error(float error);
 
     static constexpr float MAX_ACCUMULATED_ERROR = 100.;
-
-    // motor parameters
-    static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
-    static constexpr uint32_t MOTOR_GEAR_RATIO = 380;
-    static constexpr float MAX_OUTPUT_SPEED_RPM = 84.;  // unloaded speed
-    static constexpr uint32_t MAX_CONTROL_VALUE = 255;  // equal to the maximum PWM duty cycle
-
-    // motor max speed, encoder counts per second
-    static constexpr float MAX_SPEED_CPS = MAX_OUTPUT_SPEED_RPM*static_cast<float>(MOTOR_GEAR_RATIO)*static_cast<float>(ENCODER_CPR)/3600.;
-
-    // the ratio of control signal to speed for open-loop unloaded operation
-    static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(MAX_CONTROL_VALUE)/MAX_SPEED_CPS;
-
 };
 
 #endif

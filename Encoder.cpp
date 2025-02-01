@@ -1,5 +1,7 @@
 #include "Encoder.h"
 
+// This function is meant to be very lightweight to act as the ISR for
+// encoder channel rising and falling edges
 void Encoder::update_count(bool channel_A, bool channel_B)
 {
   if (channel_A)
@@ -22,7 +24,7 @@ void Encoder::update_count(bool channel_A, bool channel_B)
   }
 }
 
-int32_t Encoder::get_delta()
+int32_t Encoder::update_delta()
 {
   int64_t delta = m_count - m_last_count;
   m_last_count = m_count;
