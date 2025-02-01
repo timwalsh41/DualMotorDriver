@@ -2,12 +2,22 @@
 #include "Encoder.h"
 #include "PidController.h"
 #include "MotorController.h"
+#include "SerialInterface.h"
+#include "Utility.h"
 
-constexpr float PID_LOOP_TIME_S = 0.025;
+constexpr float PID_LOOP_TIME_MS = 0.10;
 
-// declared as global for access in ISRs
 Encoder left_channel_encoder;
 Encoder right_channel_encoder;
+
+PidController pid_controller_left(10, 0, 0, &left_channel_encoder);
+PidController pid_controller_right(10, 0, 0, &right_channel_encoder);
+
+MotorController controller(&left_channel_encoder, &right_channel_encoder, &pid_controller_left, &pid_controller_right);
+
+SerialInterface serial_interface(&controller);
+
+uint32_t last_loop_time_ms{0};
 
 void left_encoder_isr()
 {
@@ -38,21 +48,24 @@ void configure_hardware()
   pinMode(MOTOR_RIGHT_PWM, OUTPUT);
 
   pinMode(DRIVER_OUTPUT_ENABLE, OUTPUT);
-  pinMode(DRIVER_FAULT, INPUT);
+  pinMode(DRIVER_FAULT, INPUT_PULLUP);
 }
 
 void setup() {
-  PidController pid_controller_left(10, 0, 0, &left_channel_encoder);
-  PidController pid_controller_right(10, 0, 0, &right_channel_encoder);
-
   pid_controller_left.set_target_speed(0.);
   pid_controller_right.set_target_speed(0.);
-
-  MotorController controller(&left_channel_encoder, &right_channel_encoder, &pid_controller_left, &pid_controller_right);
-
+  
   configure_hardware();
+
+  Serial.begin(115200);
 }
 
 void loop() {
+  if (time_elapsed(last_loop_time_ms, millis()) >= PID_LOOP_TIME_MS)
+  {
+    last_loop_time_ms = millis();
+    controller.update_controller();
+  }
 
+  serial_interface.process_commands();
 }

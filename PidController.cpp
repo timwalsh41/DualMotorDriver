@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "PidController.h"
+#include "Utility.h"
 
 PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
       m_p_encoder{p_encoder}
@@ -58,13 +59,9 @@ float PidController::get_instantaneous_speed()
   uint32_t current_time_us = micros();
   uint32_t time_delta_us;
 
-  // handle clock rollover
-  if (current_time_us < m_last_update_time_us)
-    time_delta_us = UINT32_MAX - m_last_update_time_us + current_time_us + 1;
-  else
-    time_delta_us = current_time_us - m_last_update_time_us;
-
+  time_delta_us = time_elapsed(m_last_update_time_us, current_time_us);
   m_last_update_time_us = current_time_us;
+  
   return static_cast<float>(m_p_encoder->update_delta())/static_cast<float>(time_delta_us)*1e6;
 }
 
@@ -85,7 +82,7 @@ void PidController::update_accumulated_error(float error)
     m_accumulated_error = -MAX_ACCUMULATED_ERROR;
 }
 
-void PidController::set_mode(Mode mode)
+void PidController::set_mode(ControlMode mode)
 {
   m_mode = mode;
   set_target_speed(0);

@@ -6,7 +6,7 @@
 
 #define SPEED_SAMPLE_BUFFER_LENGTH 10
 
-enum Mode
+enum ControlMode
 {
   OPEN_LOOP,
   CLOSED_LOOP
@@ -21,7 +21,7 @@ class PidController
     float run_controller();
     float get_current_speed_cps() const {return m_currrent_speed_cps;}
     void set_target_speed(float target_speed_cps);
-    void set_mode(Mode mode);
+    void set_mode(ControlMode mode);
 
     // motor parameters
     static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
@@ -45,7 +45,7 @@ class PidController
     float m_accumulated_error{0.};
     float m_last_error{0.};
 
-    Mode m_mode{CLOSED_LOOP};
+    ControlMode m_mode{CLOSED_LOOP};
 
     float m_target_speed_cps{0.};
 
