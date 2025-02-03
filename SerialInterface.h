@@ -76,7 +76,7 @@ class SerialInterface
     size_t m_incoming_buffer_char_count{0};
     size_t m_processing_buffer_char_count{0};
 
-    static constexpr uint32_t SERIAL_TIMEOUT_MS = 2;
+    static constexpr uint32_t SERIAL_TIMEOUT_MS = 2000;
 };
 
 #endif
