@@ -32,10 +32,10 @@ void right_encoder_isr()
 void configure_hardware()
 {
   // encoder input GPIO setup
-  pinMode(ENCODER_LEFT_CHANNEL_A, INPUT);
-  pinMode(ENCODER_LEFT_CHANNEL_B, INPUT);
-  pinMode(ENCODER_RIGHT_CHANNEL_A, INPUT);
-  pinMode(ENCODER_RIGHT_CHANNEL_B, INPUT);
+  pinMode(ENCODER_LEFT_CHANNEL_A, INPUT_PULLUP);
+  pinMode(ENCODER_LEFT_CHANNEL_B, INPUT_PULLUP);
+  pinMode(ENCODER_RIGHT_CHANNEL_A, INPUT_PULLUP);
+  pinMode(ENCODER_RIGHT_CHANNEL_B, INPUT_PULLUP);
 
   // set up interrupts for left/right encoder
   attachInterrupt(ENCODER_LEFT_CHANNEL_A, left_encoder_isr, CHANGE);
@@ -49,6 +49,8 @@ void configure_hardware()
 
   pinMode(DRIVER_OUTPUT_ENABLE, OUTPUT);
   pinMode(DRIVER_FAULT, INPUT_PULLUP);
+
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void setup() {
@@ -61,11 +63,21 @@ void setup() {
 }
 
 void loop() {
+  static uint32_t last_blink_time_ms = 0;
+
+  if (time_elapsed(last_blink_time_ms, millis()) >= 250)
+  {
+    last_blink_time_ms = millis();
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+  }
+
+  /*
   if (time_elapsed(last_loop_time_ms, millis()) >= PID_LOOP_TIME_MS)
   {
     last_loop_time_ms = millis();
     controller.update_controller();
   }
+  */
 
   serial_interface.process_commands();
 }

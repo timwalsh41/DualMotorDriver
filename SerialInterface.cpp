@@ -82,7 +82,7 @@ void SerialInterface::process_commands()
 
       uint16_t outbound_crc = calcCRC16(outbound_packet, incoming_command->response_length + 2);
       memcpy(&outbound_packet[incoming_command->response_length+2], outbound_crc, 2);
-      Serial.write(outbound_packet, incoming_command->response_length + 4);
+      Serial.write(static_cast<unsigned char*>(&outbound_packet[0]), incoming_command->response_length + 4);
     }
     else
       // command failed, send back the ack'd command byte, without success flag
