@@ -1,4 +1,5 @@
 #include "Utility.h"
+#include "stddef.h"
 
 uint32_t time_elapsed(uint32_t last_time, uint32_t current_time)
 {
@@ -10,42 +11,36 @@ uint32_t time_elapsed(uint32_t last_time, uint32_t current_time)
 
 typedef union
 {
-  uint8_t *bytes;
+  uint8_t bytes[4];
   float f;
-} FloatConversionData;
-
-typedef union
-{
-  uint8_t *bytes;
   int32_t i;
-} Int32ConversionData;
+} ConversionData;
 
 float bytes_to_float(uint8_t *bytes)
 {
-  FloatConversionData data;
+  ConversionData data;
 
-  data.bytes = bytes;
+  for (size_t i = 0; i < 4; i++)
+    data.bytes[i] = bytes[i];
   return data.f;
 }
 
 void float_to_bytes(float val, uint8_t* bytes)
 {
-  FloatConversionData data;
+  ConversionData data;
 
   data.f = val;
-  bytes[0] = data.bytes[0];
-  bytes[1] = data.bytes[1];
-  bytes[2] = data.bytes[2];
-  bytes[3] = data.bytes[3];
+
+  for (size_t i = 0; i < 4; i++)
+    bytes[i] = data.bytes[i];
 }
 
 void int32_to_bytes(int32_t val, uint8_t* bytes)
 {
-  Int32ConversionData data;
+  ConversionData data;
 
   data.i = val;
-  data.bytes[0] = bytes[0];
-  data.bytes[1] = bytes[1];
-  data.bytes[2] = bytes[2];
-  data.bytes[3] = bytes[3];
+
+  for (size_t i = 0; i < 4; i++)
+    bytes[i] = data.bytes[i];
 }

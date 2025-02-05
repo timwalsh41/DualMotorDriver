@@ -3,7 +3,7 @@ from SerialParser import SerialParser
 import CommandInterface
 import time
 
-port = '/dev/ttyUSB0'
+port = '/dev/ttyUSB1'
 
 # parameters for the CRC16 used by default in the Arduino library
 config = Configuration(
@@ -21,6 +21,16 @@ parser = SerialParser(calculator, port, 115200)
 time.sleep(2)
 
 command = CommandInterface.CommandDefinitionMap[CommandInterface.CMD_CLEAR_ENCODER_COUNTS]
+parser.send_command(command)
+
+time.sleep(2)
+response = parser.poll()
+
+print(response)
+
+time.sleep(2)
+
+command = CommandInterface.CommandDefinitionMap[CommandInterface.CMD_GET_ENCODER_COUNTS]
 parser.send_command(command)
 
 time.sleep(2)

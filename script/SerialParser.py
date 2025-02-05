@@ -57,7 +57,7 @@ class SerialParser:
         received_crc = int.from_bytes(self._buffer[2 + payload_length:4 + payload_length], 'big')
         calculated_crc = self._crc.checksum(self._buffer[:2 + payload_length])
 
-        pdb.set_trace()
+        # pdb.set_trace()
 
         self._buffer = bytearray()
 

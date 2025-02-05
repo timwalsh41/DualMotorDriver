@@ -35,6 +35,7 @@ void SerialInterface::process_commands()
     if (!get_command_definition(&incoming_command))
     {
       // no command match found, discard the packet
+      // Serial.print("Command not found");
       return;
     }
 
@@ -48,6 +49,7 @@ void SerialInterface::process_commands()
     if (payload_length != incoming_command->payload_length)
     {
       // payload length mismatch, send back the ack'd command byte, without success flag
+      // Serial.print("Invalid payload length");
       Serial.write(command_byte);
       return;
     }
@@ -60,6 +62,7 @@ void SerialInterface::process_commands()
     if (crc != payload_crc)
     {
       // CRC mismatch, send back the ack'd command byte, without success flag
+      // Serial.print("CRC mismatch");
       Serial.write(command_byte);
       return;
     }
@@ -90,6 +93,7 @@ void SerialInterface::process_commands()
     }
     else
       // command failed, send back the ack'd command byte, without success flag
+      // Serial.write("Command failed");
       Serial.write(command_byte);
   }
 }
@@ -115,6 +119,8 @@ void SerialInterface::parse_serial_input()
         hand_off_command_packet();
       }
     }
+
+    m_last_character_time = millis();
   }
 
   if (time_elapsed(m_last_character_time, millis()) > SERIAL_TIMEOUT_MS && m_incoming_buffer_char_count > 0)
@@ -242,8 +248,6 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].response_length = 8;
   m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
     {
-      outgoing_payload = new uint8_t[8];
-
       int32_to_bytes(p_controller->get_status().left_encoder_counts, &outgoing_payload[0]);
       int32_to_bytes(p_controller->get_status().right_encoder_counts, &outgoing_payload[4]);
 
