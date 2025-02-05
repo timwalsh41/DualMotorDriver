@@ -59,7 +59,7 @@ class SerialInterface
     void parse_serial_input();
     bool is_valid_command(uint8_t candidate_byte);
     void hand_off_command_packet();
-    bool get_command_definition(CommandDefinition* command);
+    bool get_command_definition(CommandDefinition** command);
 
     CommandDefinition* m_command_map{nullptr};
     MotorController* m_p_controller;

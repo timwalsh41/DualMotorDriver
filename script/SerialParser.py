@@ -2,6 +2,7 @@ import serial
 from crc import Calculator
 import CommandInterface
 import os
+import pdb
 
 class SerialParser:
     def __init__(self, crc: Calculator, port: str, baudrate: int = 115200):
@@ -23,6 +24,7 @@ class SerialParser:
 
     def send_command(self, command_definition: CommandInterface, *payload):
         packet = self._build_packet(command_definition, payload)
+        print("Outgoing packet: " + packet.hex())
         self._serial.write(packet)
 
     def poll(self):
@@ -37,7 +39,6 @@ class SerialParser:
     def _build_packet(self, command_definition: CommandInterface, payload):
         packet = bytearray()
         packet.append(command_definition.command_byte)
-        packet.append(len(payload))
         packet.extend(payload)
         crc = self._crc.checksum(packet)
         packet.extend(crc.to_bytes(2, 'big'))
@@ -55,6 +56,8 @@ class SerialParser:
         payload = self._buffer[2:2 + payload_length]
         received_crc = int.from_bytes(self._buffer[2 + payload_length:4 + payload_length], 'big')
         calculated_crc = self._crc.checksum(self._buffer[:2 + payload_length])
+
+        pdb.set_trace()
 
         self._buffer = bytearray()
 

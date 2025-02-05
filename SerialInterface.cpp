@@ -26,17 +26,15 @@ void SerialInterface::process_commands()
 
   if (m_command_packet_ready)
   {
-    
     CommandDefinition* incoming_command;
 
     // we can set the ready flag to false at this point, once we exit this function we will
     // not revisit the current command
     m_command_packet_ready = false;
 
-    if (!get_command_definition(incoming_command))
+    if (!get_command_definition(&incoming_command))
     {
       // no command match found, discard the packet
-      Serial.write("Command not found\n");
       return;
     }
 
@@ -46,24 +44,22 @@ void SerialInterface::process_commands()
 
     // check incoming payload length (equal to the buffer byte count minus
     // one for the command byte and two for the CRC)
-    size_t payload_length = m_processing_buffer_char_count - 1 - 2;
+    uint8_t payload_length = m_processing_buffer_char_count - 1 - 2;
     if (payload_length != incoming_command->payload_length)
     {
       // payload length mismatch, send back the ack'd command byte, without success flag
-      Serial.write("Invalid payload length\n");
       Serial.write(command_byte);
       return;
     }
 
     // check CRC
     uint16_t crc = calcCRC16(m_processing_buffer, m_processing_buffer_char_count - 2);
-    uint16_t payload_crc = m_processing_buffer[m_processing_buffer_char_count-2] << 8 + 
-                  m_processing_buffer[m_processing_buffer_char_count-1];
+    uint16_t payload_crc = (static_cast<uint16_t>(m_processing_buffer[m_processing_buffer_char_count-2]) << 8) +
+                  static_cast<uint16_t>(m_processing_buffer[m_processing_buffer_char_count-1]);
     
     if (crc != payload_crc)
     {
       // CRC mismatch, send back the ack'd command byte, without success flag
-      Serial.write("CRC mismatch\n");
       Serial.write(command_byte);
       return;
     }
@@ -76,7 +72,6 @@ void SerialInterface::process_commands()
     // send response
     if (result)
     {
-      Serial.write("Command succeeded, sending response\n");
       command_byte |= SUCCESS_BIT;
       uint8_t outbound_packet[20];
 
@@ -84,15 +79,17 @@ void SerialInterface::process_commands()
       outbound_packet[1] = incoming_command->response_length;
 
       if (incoming_command->response_length > 0)
-        memcpy(&outbound_packet[1], outbound_payload, incoming_command->response_length);
+        memcpy(&outbound_packet[2], outbound_payload, incoming_command->response_length);
 
       uint16_t outbound_crc = calcCRC16(outbound_packet, incoming_command->response_length + 2);
-      memcpy(&outbound_packet[incoming_command->response_length+2], outbound_crc, 2);
+      uint8_t outbound_crc_byte = static_cast<uint8_t>(outbound_crc >> 8);
+      outbound_packet[incoming_command->response_length+2] = outbound_crc_byte;
+      outbound_crc_byte = static_cast<uint8_t>(outbound_crc & 0xFF);
+      outbound_packet[incoming_command->response_length+3] = outbound_crc_byte;
       Serial.write(static_cast<unsigned char*>(&outbound_packet[0]), incoming_command->response_length + 4);
     }
     else
       // command failed, send back the ack'd command byte, without success flag
-      Serial.write("Command failed\n");
       Serial.write(command_byte);
   }
 }
@@ -107,19 +104,14 @@ void SerialInterface::parse_serial_input()
       if (is_valid_command(candidate_byte))
       {
         m_incoming_buffer[m_incoming_buffer_char_count++] = candidate_byte;
-
-        // I don't think this will work - the initial string will have a terminator, and that's all that will print
-        Serial.write("Received a valid command byte\n");
       }
     }
     else
     {
       m_incoming_buffer[m_incoming_buffer_char_count++] = Serial.read();
-      Serial.write("Received a byte for an open buffer\n");
 
       if (m_incoming_buffer_char_count == SERIAL_BUFFER_SIZE)
       {
-        Serial.write("Incoming buffer full, handing off\n");
         hand_off_command_packet();
       }
     }
@@ -127,7 +119,6 @@ void SerialInterface::parse_serial_input()
 
   if (time_elapsed(m_last_character_time, millis()) > SERIAL_TIMEOUT_MS && m_incoming_buffer_char_count > 0)
   {
-    Serial.write("Timeout with non-empty buffer, handing off packet\n");
     hand_off_command_packet();
   }
 }
@@ -160,12 +151,12 @@ void SerialInterface::hand_off_command_packet()
   m_incoming_buffer_char_count = 0;
 }
 
-bool SerialInterface::get_command_definition(CommandDefinition* command)
+bool SerialInterface::get_command_definition(CommandDefinition** command)
 {
   for (size_t i = 0; i < NUM_COMMANDS; i++)
     if (m_processing_buffer[0] == m_command_map[i].command)
     {
-      command = &m_command_map[i];
+      *command = &m_command_map[i];
       return true;
     }
 

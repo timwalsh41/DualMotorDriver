@@ -23,7 +23,7 @@ time.sleep(2)
 command = CommandInterface.CommandDefinitionMap[CommandInterface.CMD_CLEAR_ENCODER_COUNTS]
 parser.send_command(command)
 
-time.sleep(0.05)
+time.sleep(2)
 response = parser.poll()
 
 print(response)
