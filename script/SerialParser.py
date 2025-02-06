@@ -2,7 +2,6 @@ import serial
 from crc import Calculator
 import CommandInterface
 import os
-import pdb
 
 class SerialParser:
     def __init__(self, crc: Calculator, port: str, baudrate: int = 115200):
@@ -22,21 +21,18 @@ class SerialParser:
         self._buffer = bytearray()
         self._serial = serial.Serial(self._port, baudrate=self._baudrate, timeout=1)
 
-    def send_command(self, command_definition: CommandInterface, *payload):
+    def send_command(self, command_definition: CommandInterface, payload: bytearray = bytearray()):
         packet = self._build_packet(command_definition, payload)
-        print("Outgoing packet: " + packet.hex())
         self._serial.write(packet)
 
     def poll(self):
         if self._serial.in_waiting > 0:
             self._buffer.extend(self._serial.read(self._serial.in_waiting))
-            print(self._buffer)
             return self._parse_response()
         
-        print('No response')
         return None
 
-    def _build_packet(self, command_definition: CommandInterface, payload):
+    def _build_packet(self, command_definition: CommandInterface, payload: bytearray = bytearray()):
         packet = bytearray()
         packet.append(command_definition.command_byte)
         packet.extend(payload)
@@ -56,9 +52,6 @@ class SerialParser:
         payload = self._buffer[2:2 + payload_length]
         received_crc = int.from_bytes(self._buffer[2 + payload_length:4 + payload_length], 'big')
         calculated_crc = self._crc.checksum(self._buffer[:2 + payload_length])
-
-        # pdb.set_trace()
-
         self._buffer = bytearray()
 
         if received_crc == calculated_crc:

@@ -120,6 +120,8 @@ void SerialInterface::parse_serial_input()
       }
     }
 
+    // we are assuming here that a valid serial read occured in the above
+    // conditional when we update the last received character time
     m_last_character_time = millis();
   }
 
