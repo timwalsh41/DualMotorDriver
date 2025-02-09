@@ -6,11 +6,11 @@ import time
 
 SERIAL_DELAY_TIME_S = 0.01
 
-# format string for byte packing, big-endian, 2 4-byte floats
-DUAL_FLOAT_PACK_FMT = '>ff'
+# format string for byte packing, little-endian, 2 4-byte floats
+DUAL_FLOAT_PACK_FMT = '<ff'
 
-# format string for byte packing, big-endian, 2 4-byte signed integers
-DUAL_INT32_PACK_FMT = '>ll'
+# format string for byte packing, little-endian, 2 4-byte signed integers
+DUAL_INT32_PACK_FMT = '<ll'
 
 class DualMotorCommander:
     r'''

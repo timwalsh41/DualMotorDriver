@@ -1,7 +1,9 @@
 from DualMotorCommander import DualMotorCommander
+import time
 
-commander = DualMotorCommander('/dev/ttyUSB1', 115200)
+commander = DualMotorCommander('/dev/ttyUSB0', 115200)
 
+r'''
 result = commander.get_motor_speeds()
 print(f'Motor speeds are left={result[1][0]:.3f} cps, right={result[1][1]:.3f} cps')
 
@@ -16,3 +18,11 @@ print(f'Set target speeds: {result}')
 
 result = commander.set_closed_loop_mode()
 print(f'Set closed loop mode: {result}')
+'''
+
+while True:
+    result = commander.get_encoder_counts()
+    _, fault = commander.read_fault()
+    print(f'{time.time():.2f} Encoder counts are left={result[1][0]}, right={result[1][1]}; fault = {fault}')
+
+    time.sleep(0.25)
