@@ -306,7 +306,6 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].response_length = 1;
   m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
     {
-      outgoing_payload = new uint8_t[1];
       outgoing_payload[0] = p_controller->get_status().fault;
 
       return true;

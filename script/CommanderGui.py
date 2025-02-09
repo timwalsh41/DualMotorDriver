@@ -30,7 +30,7 @@ def prepare_plot():
     rtp.set_axis_ylabel(1,0,'Velocity (cps)')
     
     rtp.set_axis_ylimit(0,0,[-10000, 10000])
-    rtp.set_axis_ylimit(1,0,[-500, 500])
+    rtp.set_axis_ylimit(1,0,[-10000, 10000])
 
     rtp.add_button("Exit", exit_demo)
     rtp.add_label(width=7, caption='My label')
