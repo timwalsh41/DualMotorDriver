@@ -21,8 +21,10 @@ print(f'Set closed loop mode: {result}')
 '''
 
 while True:
-    result = commander.get_encoder_counts()
+    encoder_result = commander.get_encoder_counts()
+    speed_result = commander.get_motor_speeds()
+    
     _, fault = commander.read_fault()
-    print(f'{time.time():.2f} Encoder counts are left={result[1][0]}, right={result[1][1]}; fault = {fault}')
+    print(f'{time.time():.2f} Status={speed_result[0]}; encoder left={encoder_result[1][0]} right={encoder_result[1][1]} speeds left={speed_result[1][0]} cps right={speed_result[1][1]} cps; fault = {fault}')
 
     time.sleep(0.25)

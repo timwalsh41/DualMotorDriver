@@ -1,0 +1,28 @@
+from struct import unpack
+
+speed_bytes_list = [
+    b'\x00\x00\xE0\x37',
+    b'\x00\x00\xE0\x37',
+    b'\x00\x00\xE0\x37',
+    b'\x00\x00\xE0\x37',
+    b'\x1D\x35\x80\xC1',
+    b'\xBA\x47\x37\xC3',
+    b'\x4A\xA6\xD4\xC3',
+    b'\x71\x29\xDC\xC3',
+    b'\x71\x29\xDC\xC3',
+    b'\x71\x29\xDC\xC3',
+    b'\x71\x29\xDC\xC3',
+    b'\x71\x29\xDC\xC3',
+    b'\x1E\x26\xD4\xC3',
+    b'\x93\x85\x80\xC3',
+    b'\xB0\x64\x70\xC1',
+    b'\x00\x00\x74\x38',
+    b'\x00\x00\x74\x38',
+    b'\x00\x00\x74\x38'
+]
+
+float_unpack_format = '<f'
+
+for speed_bytes in speed_bytes_list:
+    speed = unpack(float_unpack_format, speed_bytes)
+    print(f'Speed bytes = {" ".join(f"0x{byte:02X}" for byte in speed_bytes)} => {speed[0]:+.6f}')

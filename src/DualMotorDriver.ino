@@ -6,7 +6,7 @@
 #include "SerialInterface.h"
 #include "Utility.h"
 
-constexpr float PID_LOOP_TIME_MS = 200;
+constexpr float PID_LOOP_TIME_MS = 10;
 
 Encoder left_channel_encoder;
 Encoder right_channel_encoder;
@@ -70,6 +70,7 @@ void setup() {
 
 void loop() {
   static uint32_t last_blink_time_ms = 0;
+  static uint8_t speed_bytes[4];
 
   if (time_elapsed(last_blink_time_ms, millis()) >= 250)
   {
@@ -77,6 +78,18 @@ void loop() {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     // Serial.println(controller.get_status().left_encoder_counts);
     // Serial.println(controller.get_status().fault);
+    // Serial.println(controller.get_status().left_motor_current_speed_cps);
+
+    /*
+    float_to_bytes(controller.get_status().left_motor_current_speed_cps, speed_bytes);
+    Serial.print("Speed bytes: ");
+    for (size_t i = 0; i < 4; ++i) {
+      Serial.print("0x");
+      Serial.print(speed_bytes[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+    */
   }
 
   if (time_elapsed(last_loop_time_ms, millis()) >= PID_LOOP_TIME_MS)

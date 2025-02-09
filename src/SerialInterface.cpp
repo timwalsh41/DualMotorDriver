@@ -35,7 +35,6 @@ void SerialInterface::process_commands()
     if (!get_command_definition(&incoming_command))
     {
       // no command match found, discard the packet
-      // Serial.print("Command not found");
       return;
     }
 
@@ -49,7 +48,6 @@ void SerialInterface::process_commands()
     if (payload_length != incoming_command->payload_length)
     {
       // payload length mismatch, send back the ack'd command byte, without success flag
-      // Serial.print("Invalid payload length");
       Serial.write(command_byte);
       return;
     }
@@ -62,7 +60,6 @@ void SerialInterface::process_commands()
     if (crc != payload_crc)
     {
       // CRC mismatch, send back the ack'd command byte, without success flag
-      // Serial.print("CRC mismatch");
       Serial.write(command_byte);
       return;
     }
@@ -82,13 +79,16 @@ void SerialInterface::process_commands()
       outbound_packet[1] = incoming_command->response_length;
 
       if (incoming_command->response_length > 0)
+      {
         memcpy(&outbound_packet[2], outbound_payload, incoming_command->response_length);
+      }
 
       uint16_t outbound_crc = calcCRC16(outbound_packet, incoming_command->response_length + 2);
       uint8_t outbound_crc_byte = static_cast<uint8_t>(outbound_crc >> 8);
       outbound_packet[incoming_command->response_length+2] = outbound_crc_byte;
       outbound_crc_byte = static_cast<uint8_t>(outbound_crc & 0xFF);
       outbound_packet[incoming_command->response_length+3] = outbound_crc_byte;
+
       Serial.write(static_cast<unsigned char*>(&outbound_packet[0]), incoming_command->response_length + 4);
     }
     else
@@ -203,8 +203,6 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].response_length = 8;
   m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
     {
-      outgoing_payload = new uint8_t[8];
-
       float_to_bytes(p_controller->get_status().left_motor_current_speed_cps, &outgoing_payload[0]);
       float_to_bytes(p_controller->get_status().right_motor_current_speed_cps, &outgoing_payload[4]);
 
