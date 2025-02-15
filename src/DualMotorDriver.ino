@@ -70,7 +70,7 @@ void setup() {
 
 void loop() {
   static uint32_t last_blink_time_ms = 0;
-  static uint8_t speed_bytes[4];
+  // static uint8_t speed_bytes[4];
 
   if (time_elapsed(last_blink_time_ms, millis()) >= 250)
   {

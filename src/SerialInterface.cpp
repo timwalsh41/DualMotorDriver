@@ -4,8 +4,11 @@
 #include "Utility.h"
 #include "CRC16.h"
 #include "CRC.h"
+#ifdef TEST
+#include <cstring>
+#endif
 
-SerialInterface::SerialInterface(MotorController* p_controller) :
+SerialInterface::SerialInterface(IMotorController* p_controller) :
   m_p_controller{p_controller}
 {
   build_command_map();
@@ -64,6 +67,8 @@ void SerialInterface::process_commands()
       return;
     }
 
+    // BEWARE: we are creating a memory pool here to hold the outbound payoad populated by the command callback
+    // function, we need to ensure that the payload is never larger than the pool size
     uint8_t outbound_payload[16];
 
     // run command
@@ -173,6 +178,10 @@ bool SerialInterface::get_command_definition(CommandDefinition** command)
 
 void SerialInterface::build_command_map()
 {
+  // BEWARE: we are creating a memory pool here to hold the outbound payoad populated by the command callback
+  // function, we need to ensure that the payload is never larger than the pool size
+  // Update the pool size in the process_commands function as needed
+
   size_t map_idx = 0;
   m_command_map = new CommandDefinition[NUM_COMMANDS];
 
@@ -184,7 +193,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_SET_MOTOR_SPEEDS;
   m_command_map[map_idx].payload_length = 8;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->set_target_speed(MotorChannel::LEFT, bytes_to_float(&incoming_payload[0]));
       p_controller->set_target_speed(MotorChannel::RIGHT, bytes_to_float(&incoming_payload[4]));
@@ -201,7 +210,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_GET_MOTOR_SPEEDS;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 8;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       float_to_bytes(p_controller->get_status().left_motor_current_speed_cps, &outgoing_payload[0]);
       float_to_bytes(p_controller->get_status().right_motor_current_speed_cps, &outgoing_payload[4]);
@@ -216,7 +225,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_SET_OPEN_LOOP_MODE;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->set_mode(ControlMode::OPEN_LOOP);
 
@@ -230,7 +239,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_SET_CLOSED_LOOP_MODE;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->set_mode(ControlMode::CLOSED_LOOP);
 
@@ -246,7 +255,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_GET_ENCODER_COUNTS;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 8;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       int32_to_bytes(p_controller->get_status().left_encoder_counts, &outgoing_payload[0]);
       int32_to_bytes(p_controller->get_status().right_encoder_counts, &outgoing_payload[4]);
@@ -261,7 +270,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_CLEAR_ENCODER_COUNTS;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->clear_encoders();
 
@@ -275,7 +284,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_ENABLE_DRIVER;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->enable_drive();
 
@@ -289,7 +298,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_DISABLE_DRIVER;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 0;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       p_controller->disable_drive();
 
@@ -304,7 +313,7 @@ void SerialInterface::build_command_map()
   m_command_map[map_idx].command = CMD_READ_FAULT;
   m_command_map[map_idx].payload_length = 0;
   m_command_map[map_idx].response_length = 1;
-  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, MotorController* p_controller)
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       outgoing_payload[0] = p_controller->get_status().fault;
 

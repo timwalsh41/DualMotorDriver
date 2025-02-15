@@ -21,7 +21,19 @@ typedef struct
 }
 SystemStatus;
 
-class MotorController
+class IMotorController
+{
+  public:
+    virtual ~IMotorController() {}
+    virtual void enable_drive() = 0;
+    virtual void disable_drive() = 0;
+    virtual void set_mode(ControlMode mode) = 0;
+    virtual void set_target_speed(MotorChannel channel, float speed_cps) = 0;
+    virtual void clear_encoders() = 0;
+    virtual const SystemStatus& get_status() const = 0;
+};
+
+class MotorController : public IMotorController
 {
   public:
     MotorController(Encoder* p_left_encoder, Encoder* p_right_encoder, PidController* p_left_controller, PidController* p_right_controller);

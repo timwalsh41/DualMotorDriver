@@ -5,7 +5,7 @@
 #include "stddef.h"
 
 // forward declaration of motor controller class
-class MotorController;
+class IMotorController;
 
 using Command = uint8_t;
 
@@ -17,7 +17,7 @@ using Command = uint8_t;
 // - MotorController pointer (with Arduino Nano, we don't have standard library support and can't use std::function
 //   to define this type; using a function pointer means we can't use lambdas with captures, so we'll just pass
 //   the member variable motor controller pointer instead)
-using CommandCallback = bool (*)(Command&, uint8_t*, size_t, uint8_t*, MotorController*);
+using CommandCallback = bool (*)(Command&, uint8_t*, size_t, uint8_t*, IMotorController*);
 
 typedef struct
 {
@@ -33,7 +33,7 @@ typedef struct
 class SerialInterface
 {
   public:
-    SerialInterface(MotorController*);
+    SerialInterface(IMotorController*);
     ~SerialInterface();
 
     void process_commands();
@@ -62,7 +62,7 @@ class SerialInterface
     bool get_command_definition(CommandDefinition** command);
 
     CommandDefinition* m_command_map{nullptr};
-    MotorController* m_p_controller;
+    IMotorController* m_p_controller;
 
     bool m_command_packet_ready{false};
     int32_t m_last_character_time{0};
