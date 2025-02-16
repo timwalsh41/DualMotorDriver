@@ -22,6 +22,7 @@ void test_hello_world(void) {
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_hello_world);
+    
     RUN_TEST(test_serial_type);
     RUN_TEST(test_set_motor_speed_command);
     RUN_TEST(test_invalid_command);
@@ -34,5 +35,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_set_control_mode);
 
     RUN_TEST(test_pid_type);
+    RUN_TEST(test_pid_speed_calculation);
+    RUN_TEST(test_open_loop_control_calculation);
+    RUN_TEST(test_closed_loop_control_calculation);
+
     return UNITY_END();
 }

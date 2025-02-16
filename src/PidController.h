@@ -23,6 +23,10 @@ class PidController
     void set_target_speed(float target_speed_cps);
     void set_mode(ControlMode mode);
 
+    float get_kP() const {return m_K_p;}
+    float get_kI() const {return m_K_i;}
+    float get_kD() const {return m_K_d;}
+
     // motor parameters
     static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
     static constexpr uint32_t MOTOR_GEAR_RATIO = 380;
@@ -43,6 +47,7 @@ class PidController
     float m_K_d;
 
     float m_accumulated_error{0.};
+    float m_differential_error{0.};
     float m_last_error{0.};
 
     ControlMode m_mode{CLOSED_LOOP};

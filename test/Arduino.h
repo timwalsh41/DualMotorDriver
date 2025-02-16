@@ -14,6 +14,9 @@ extern MockSerial Serial;
 void pid_test_setup();
 void pid_test_teardown();
 void test_pid_type();
+void test_pid_speed_calculation();
+void test_open_loop_control_calculation();
+void test_closed_loop_control_calculation();
 
 // serial interface tests
 void serial_test_setup();

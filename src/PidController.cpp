@@ -3,6 +3,7 @@
 #include "Utility.h"
 
 PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
+      m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, 
       m_p_encoder{p_encoder}
 {
   for (uint32_t i = 0; i < SPEED_SAMPLE_BUFFER_LENGTH; i++)
@@ -11,9 +12,11 @@ PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder
   }
 }
 
+// Run controller updates the current speed and provides the output control signal
+// (open or closed loop mode)
 float PidController::run_controller()
 {
-  float error, differential_error;
+  float error;
   float control_signal;
 
   // read the instantaneous speed from the encoder and update the filtered speed
@@ -24,9 +27,9 @@ float PidController::run_controller()
   {
     error = m_target_speed_cps - m_current_speed_cps;
     update_accumulated_error(error);
-    differential_error = error - m_last_error;
+    m_differential_error = error - m_last_error;
 
-    control_signal = m_K_p*error + m_K_i*m_accumulated_error + m_K_d*differential_error;
+    control_signal = m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
     m_last_error = error;
   }
   else
@@ -62,7 +65,7 @@ float PidController::get_instantaneous_speed()
 
   time_delta_us = time_elapsed(m_last_update_time_us, current_time_us);
   m_last_update_time_us = current_time_us;
-  
+
   return static_cast<float>(m_p_encoder->update_delta())/static_cast<float>(time_delta_us)*1e6;
 }
 
