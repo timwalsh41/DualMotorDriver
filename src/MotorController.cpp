@@ -62,6 +62,7 @@ void MotorController::update_controller()
 
   m_driver.update();
   m_system_status.fault = m_driver.is_faulted();
+  m_system_status.mode = m_mode;
 }
 
 void MotorController::enable_drive()

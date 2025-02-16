@@ -18,6 +18,7 @@ typedef struct
 
   bool enabled{false};
   bool fault{false};
+  ControlMode mode{CLOSED_LOOP};
 }
 SystemStatus;
 

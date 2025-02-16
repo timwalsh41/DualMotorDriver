@@ -10,21 +10,28 @@
 class MockSerial;
 extern MockSerial Serial;
 
+// PID controller tests
 void pid_test_setup();
 void pid_test_teardown();
 void test_pid_type();
 
+// serial interface tests
 void serial_test_setup();
 void serial_test_teardown();
 void test_serial_type();
-void test_valid_command_sequence();
+void test_set_motor_speed_command();
 void test_invalid_command();
 void test_invalid_payload();
 void test_invalid_crc();
+void test_enable_disable_driver();
+void test_read_fault();
+void test_read_clear_encoders();
+void test_get_motor_speeds();
+void test_set_control_mode();
 
+// Mocked Arduino functionality
 unsigned long millis();
 unsigned long micros();
-
 void yield();
 
 class MockSerial
