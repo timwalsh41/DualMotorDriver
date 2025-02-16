@@ -22,7 +22,11 @@ void test_hello_world(void) {
 int main(int argc, char **argv) {
     UNITY_BEGIN();
     RUN_TEST(test_hello_world);
-    RUN_TEST(test_pid_type);
     RUN_TEST(test_serial_type);
+    RUN_TEST(test_valid_command_sequence);
+    RUN_TEST(test_invalid_command);
+    RUN_TEST(test_invalid_payload);
+    RUN_TEST(test_invalid_crc);
+    RUN_TEST(test_pid_type);
     return UNITY_END();
 }

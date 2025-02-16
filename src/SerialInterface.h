@@ -54,6 +54,8 @@ class SerialInterface
     static constexpr Command CMD_DISABLE_DRIVER = 0x36;
     static constexpr Command CMD_READ_FAULT = 0x37;
 
+    static constexpr uint32_t SERIAL_TIMEOUT_MS = 4;
+
   private:
     void build_command_map();
     void parse_serial_input();
@@ -75,8 +77,6 @@ class SerialInterface
 
     size_t m_incoming_buffer_char_count{0};
     size_t m_processing_buffer_char_count{0};
-
-    static constexpr uint32_t SERIAL_TIMEOUT_MS = 4;
 };
 
 #endif

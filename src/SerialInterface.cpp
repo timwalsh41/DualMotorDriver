@@ -45,6 +45,14 @@ void SerialInterface::process_commands()
     // a failed command
     uint8_t command_byte = incoming_command->command | ACK_BIT;
 
+    // check the total packet length
+    if (m_processing_buffer_char_count < 3)
+    {
+      // packet too short, send back the ack'd command byte, without success flag
+      Serial.write(command_byte);
+      return;
+    }
+
     // check incoming payload length (equal to the buffer byte count minus
     // one for the command byte and two for the CRC)
     uint8_t payload_length = m_processing_buffer_char_count - 1 - 2;
