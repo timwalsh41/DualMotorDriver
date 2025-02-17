@@ -91,3 +91,21 @@ void PidController::set_mode(ControlMode mode)
   m_mode = mode;
   set_target_speed(0);
 }
+
+void PidController::set_kP(float kP)
+{
+  if (kP >= 0)
+    m_K_p = kP;
+}
+
+void PidController::set_kI(float kI)
+{
+  if (kI >= 0)
+    m_K_i = kI;
+}
+
+void PidController::set_kD(float kD)
+{
+  if (kD >= 0)
+    m_K_d = kD;
+}

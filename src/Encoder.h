@@ -24,10 +24,7 @@ class Encoder
     void reset_count();
     int64_t get_count() const {return m_count;}
     int64_t get_last_count() const {return m_last_count;}
-
-    // these functions are used in testing the PID controller
     void set_count(int32_t count) {m_count = count;}
-    void set_last_count(int32_t count) {m_last_count = count;}
 
   private:
     int32_t m_count{0};

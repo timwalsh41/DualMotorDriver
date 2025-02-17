@@ -26,6 +26,11 @@ class PidController
     float get_kP() const {return m_K_p;}
     float get_kI() const {return m_K_i;}
     float get_kD() const {return m_K_d;}
+    float get_target_speed_cps() const {return m_target_speed_cps;}
+
+    void set_kP(float kP);
+    void set_kI(float kI);
+    void set_kD(float kD);
 
     // motor parameters
     static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
@@ -38,6 +43,8 @@ class PidController
 
     // the ratio of control signal to speed for open-loop unloaded operation
     static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(MAX_CONTROL_VALUE)/MAX_SPEED_CPS;
+
+    static constexpr float MAX_ACCUMULATED_ERROR = 100.;
 
   private:
     uint32_t m_last_update_time_us{0};
@@ -70,8 +77,6 @@ class PidController
 
     // update accumulated error, clamping within a max range
     void update_accumulated_error(float error);
-
-    static constexpr float MAX_ACCUMULATED_ERROR = 100.;
 };
 
 #endif
