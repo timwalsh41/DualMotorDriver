@@ -17,8 +17,8 @@ bool m_fault{false};
 
 void MotorDriver::update()
 {
-  // enable signal is active low
-  digitalWrite(DRIVER_OUTPUT_ENABLE, !m_is_enabled);
+  // enable signal is active high
+  digitalWrite(DRIVER_OUTPUT_ENABLE, m_is_enabled);
   
   digitalWrite(MOTOR_LEFT_DIR, m_left_direction);
   digitalWrite(MOTOR_RIGHT_DIR, m_right_direction);
@@ -37,10 +37,16 @@ void MotorDriver::set_channel_pwm(MotorChannel channel, uint8_t pwm)
 
   if (channel == MotorChannel::LEFT)
   {
+    if (pwm > MAX_PWM_VALUE)
+      pwm = MAX_PWM_VALUE;
+
     m_left_pwm = pwm;
   }
   else if (channel == MotorChannel::RIGHT)
   {
+    if (pwm > MAX_PWM_VALUE)
+      pwm = MAX_PWM_VALUE;
+
     m_right_pwm = pwm;
   }
 }

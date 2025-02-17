@@ -1,6 +1,11 @@
 #ifndef DUALMOTORDRIVER_H_
 #define DUALMOTORDRIVER_H_
 
+#include "stdint.h"
+
+// Global limit for PWM values
+constexpr uint8_t MAX_PWM_VALUE = 175;
+
 // Pin definitions
 #define ENCODER_LEFT_CHANNEL_A    2
 #define ENCODER_RIGHT_CHANNEL_A   3
@@ -12,5 +17,6 @@
 #define MOTOR_RIGHT_PWM           9
 #define DRIVER_OUTPUT_ENABLE      10
 #define DRIVER_FAULT              11
+#define FLAG                      12
 
 #endif // DUALMOTORDRIVER_H

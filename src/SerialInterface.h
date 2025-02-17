@@ -70,7 +70,7 @@ class SerialInterface
     bool get_command_definition(CommandDefinition** command);
 
     // Note we are using an array here rather than a std::unordered_map because we don't have standard library support
-    CommandDefinition* m_command_map{nullptr};
+    CommandDefinition m_command_map[NUM_COMMANDS];
     IMotorController* m_p_controller;
 
     bool m_command_packet_ready{false};

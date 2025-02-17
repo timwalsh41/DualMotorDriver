@@ -16,11 +16,7 @@ SerialInterface::SerialInterface(IMotorController* p_controller) :
 
 SerialInterface::~SerialInterface()
 {
-  if (m_command_map != nullptr)
-  {
-    delete[] m_command_map;
-    m_command_map = nullptr;
-  }
+
 }
 
 void SerialInterface::process_commands()
@@ -191,7 +187,6 @@ void SerialInterface::build_command_map()
   // Update the pool size in the SerialInterface class definition as needed
 
   size_t map_idx = 0;
-  m_command_map = new CommandDefinition[NUM_COMMANDS];
 
   // SET MOTOR SPEEDS
   // Incoming payload length: 8

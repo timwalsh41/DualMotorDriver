@@ -4,7 +4,8 @@
 #include "Encoder.h"
 #include "stddef.h"
 
-#define SPEED_SAMPLE_BUFFER_LENGTH 16
+#define SPEED_SAMPLE_BUFFER_LENGTH 80
+#define PWM_SAMPLE_BUFFER_LENGTH 80
 
 enum ControlMode
 {
@@ -33,18 +34,17 @@ class PidController
     void set_kD(float kD);
 
     // motor parameters
-    static constexpr uint32_t ENCODER_CPR = 64;         // counts per revolution
+    static constexpr uint32_t ENCODER_CPR = 64/2;         // nominal encoder counts per revolution / 2
     static constexpr uint32_t MOTOR_GEAR_RATIO = 50;
     static constexpr float MAX_OUTPUT_SPEED_RPM = 200.;  // unloaded speed
-    static constexpr uint32_t MAX_CONTROL_VALUE = UINT8_MAX;  // equal to the maximum PWM duty cycle
 
     // motor max speed, encoder counts per second
-    static constexpr float MAX_SPEED_CPS = MAX_OUTPUT_SPEED_RPM*static_cast<float>(MOTOR_GEAR_RATIO)*static_cast<float>(ENCODER_CPR)/3600.;
+    static constexpr float MAX_SPEED_CPS = MAX_OUTPUT_SPEED_RPM*static_cast<float>(MOTOR_GEAR_RATIO)*static_cast<float>(ENCODER_CPR)/60.;
 
     // the ratio of control signal to speed for open-loop unloaded operation
-    static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(MAX_CONTROL_VALUE)/MAX_SPEED_CPS;
+    static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(UINT8_MAX)/MAX_SPEED_CPS;
 
-    static constexpr float MAX_ACCUMULATED_ERROR = 100.;
+    static constexpr float MAX_ACCUMULATED_ERROR = 1000.;
 
   private:
     uint32_t m_last_update_time_us{0};
@@ -69,6 +69,10 @@ class PidController
 
     Encoder *m_p_encoder;
 
+    float m_pwm_sample_buffer[PWM_SAMPLE_BUFFER_LENGTH];
+    size_t m_pwm_sample_buffer_ptr{0};
+    float m_filtered_pwm{0.};
+
     // calculate the instantaneous speed sample
     float get_instantaneous_speed();
 
@@ -77,6 +81,9 @@ class PidController
 
     // update accumulated error, clamping within a max range
     void update_accumulated_error(float error);
+
+    // update the filtered PWM value
+    void update_filtered_pwm(float pwm_value);
 };
 
 #endif

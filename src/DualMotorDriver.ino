@@ -6,13 +6,13 @@
 #include "SerialInterface.h"
 #include "Utility.h"
 
-constexpr float PID_LOOP_TIME_MS = 10;
+constexpr float PID_LOOP_TIME_MS = 2;
 
 Encoder left_channel_encoder;
 Encoder right_channel_encoder;
 
-PidController pid_controller_left(10, 0, 0, &left_channel_encoder);
-PidController pid_controller_right(10, 0, 0, &right_channel_encoder);
+PidController pid_controller_left(0.1, 0, 0, &left_channel_encoder);
+PidController pid_controller_right(0.1, 0, 0, &right_channel_encoder);
 
 MotorController controller(&left_channel_encoder, &right_channel_encoder, &pid_controller_left, &pid_controller_right);
 
@@ -52,11 +52,13 @@ void configure_hardware()
   pinMode(DRIVER_FAULT, INPUT_PULLUP);
 
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(FLAG, OUTPUT);
 
   digitalWrite(MOTOR_LEFT_DIR, 0);
   digitalWrite(MOTOR_LEFT_PWM, 0);
   digitalWrite(MOTOR_RIGHT_DIR, 0);
   digitalWrite(MOTOR_RIGHT_PWM, 0);
+  digitalWrite(FLAG, 0);
 }
 
 void setup() {
@@ -94,8 +96,10 @@ void loop() {
 
   if (time_elapsed(last_loop_time_ms, millis()) >= PID_LOOP_TIME_MS)
   {
+    digitalWrite(FLAG, 1);
     last_loop_time_ms = millis();
     controller.update_controller();
+    digitalWrite(FLAG, 0);
   }
   
   serial_interface.process_commands();

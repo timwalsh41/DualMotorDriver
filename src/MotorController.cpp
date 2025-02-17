@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "MotorController.h"
+#include "DualMotorDriver.h"
 
 MotorController::MotorController(Encoder* p_left_encoder, Encoder* p_right_encoder, PidController* p_left_controller, PidController* p_right_controller) :
       m_p_left_encoder{p_left_encoder},
@@ -26,12 +27,12 @@ void MotorController::update_controller()
   if (candidate_control_value < 0)
   {
     m_driver.set_channel_direction(MotorChannel::LEFT, false);
-    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, PidController::MAX_CONTROL_VALUE));
+    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, MAX_PWM_VALUE));
   }
   else
   {
     m_driver.set_channel_direction(MotorChannel::LEFT, true);
-    target_pwm = static_cast<uint8_t>(min(candidate_control_value, PidController::MAX_CONTROL_VALUE));
+    target_pwm = static_cast<uint8_t>(min(candidate_control_value, MAX_PWM_VALUE));
   }
 
   m_driver.set_channel_pwm(MotorChannel::LEFT, target_pwm);
@@ -45,12 +46,12 @@ void MotorController::update_controller()
   if (candidate_control_value < 0)
   {
     m_driver.set_channel_direction(MotorChannel::RIGHT, false);
-    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, PidController::MAX_CONTROL_VALUE));
+    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, MAX_PWM_VALUE));
   }
   else
   {
     m_driver.set_channel_direction(MotorChannel::RIGHT, true);
-    target_pwm = static_cast<uint8_t>(min(candidate_control_value, PidController::MAX_CONTROL_VALUE));
+    target_pwm = static_cast<uint8_t>(min(candidate_control_value, MAX_PWM_VALUE));
   }
 
   m_driver.set_channel_pwm(MotorChannel::RIGHT, target_pwm);

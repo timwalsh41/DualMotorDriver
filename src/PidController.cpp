@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "PidController.h"
 #include "Utility.h"
+#include "DualMotorDriver.h"
 
 PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
       m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, 
@@ -10,34 +11,54 @@ PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder
   {
     m_speed_sample_buffer[i] = 0;
   }
+  for (uint32_t i = 0; i < PWM_SAMPLE_BUFFER_LENGTH; i++)
+  {
+    m_pwm_sample_buffer[i] = 0;
+  }
 }
 
 // Run controller updates the current speed and provides the output control signal
 // (open or closed loop mode)
 float PidController::run_controller()
 {
-  float error;
-  float control_signal;
-
   // read the instantaneous speed from the encoder and update the filtered speed
   // value
   update_current_speed();
 
   if (m_mode == CLOSED_LOOP)
   {
-    error = m_target_speed_cps - m_current_speed_cps;
+    float control_signal;
+
+    float error = m_target_speed_cps - m_current_speed_cps;
     update_accumulated_error(error);
     m_differential_error = error - m_last_error;
 
     control_signal = m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
     m_last_error = error;
+
+    if (control_signal*m_target_speed_cps < 0)
+    {
+      // do not apply control to fight the direction the motor is spinning
+      control_signal = 0;
+    }
+    else if (control_signal > MAX_PWM_VALUE)
+    {
+      control_signal = MAX_PWM_VALUE;
+    }
+    else if (control_signal < -MAX_PWM_VALUE)
+    {
+        control_signal = -MAX_PWM_VALUE;
+    }
+
+    // Update the filtered control signal
+    update_filtered_pwm(control_signal);
+
+    return m_filtered_pwm;
   }
   else
   {
-    control_signal = CONTROL_SPEED_RATIO*m_target_speed_cps;
+    return CONTROL_SPEED_RATIO*m_target_speed_cps;
   }
-
-  return control_signal;
 }
 
 // We maintain a buffer of instantaneous speed readings and take the average of that buffer
@@ -108,4 +129,13 @@ void PidController::set_kD(float kD)
 {
   if (kD >= 0)
     m_K_d = kD;
+}
+
+void PidController::update_filtered_pwm(float pwm_value)
+{
+  m_filtered_pwm += (pwm_value - m_pwm_sample_buffer[m_pwm_sample_buffer_ptr])/PWM_SAMPLE_BUFFER_LENGTH;
+  m_pwm_sample_buffer[m_pwm_sample_buffer_ptr++] = pwm_value;
+
+  if (m_pwm_sample_buffer_ptr >= PWM_SAMPLE_BUFFER_LENGTH)
+    m_pwm_sample_buffer_ptr = 0;
 }

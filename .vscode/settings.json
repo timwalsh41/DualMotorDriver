@@ -1,3 +1,4 @@
 {
-    "C_Cpp.codeAnalysis.clangTidy.config": "{Checks: '-*,clang-analyzer-*', CheckOptions: [{key: 'clang-tidy.extra-arg', value: '-I/home/tim/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/tim/Documents/Code/Arduino/DualMotorDriver/.pio/libdeps/nanoatmega328/Unity/src'}]}"
+    "C_Cpp.codeAnalysis.clangTidy.config": "{Checks: '-*,clang-analyzer-*', CheckOptions: [{key: 'clang-tidy.extra-arg', value: '-I/home/tim/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/tim/Documents/Code/Arduino/DualMotorDriver/.pio/libdeps/nanoatmega328/Unity/src'}]}",
+    "outline.collapseItems": "alwaysCollapse"
 }

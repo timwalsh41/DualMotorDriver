@@ -47,6 +47,7 @@ class DualMotorCommander:
         self._parser.send_command(command, payload_data)
         time.sleep(SERIAL_DELAY_TIME_S)
         response = self._parser.poll()
+        time.sleep(SERIAL_DELAY_TIME_S)
 
         if response is None:
             return (False, [])
