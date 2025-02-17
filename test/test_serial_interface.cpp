@@ -24,10 +24,10 @@ class MockController : public IMotorController
         }
         ~MockController() {}
 
-        void enable_drive() { m_system_status.enabled = true; }
-        void disable_drive() { m_system_status.enabled = false; }
-        void set_mode(ControlMode mode) { m_system_status.mode = mode; }
-        void set_target_speed(MotorChannel channel, float speed_cps)
+        void enable_drive() override { m_system_status.enabled = true; }
+        void disable_drive() override { m_system_status.enabled = false; }
+        void set_mode(ControlMode mode) override { m_system_status.mode = mode; }
+        void set_target_speed(MotorChannel channel, float speed_cps) override
         {
             if (channel == MotorChannel::LEFT)
             {
@@ -38,13 +38,14 @@ class MockController : public IMotorController
                 m_system_status.right_motor_target_speed_cps = speed_cps;
             }
         }
-        void clear_encoders() { m_system_status.left_encoder_counts = m_system_status.right_encoder_counts = 0; }
-        const SystemStatus& get_status() const {return m_system_status;}
+        void clear_encoders() override { m_system_status.left_encoder_counts = m_system_status.right_encoder_counts = 0; }
+        const SystemStatus& get_status() const override {return m_system_status;}
+        void set_pid_gains(float kP, float kI, float kD) override {m_system_status.kP = kP; m_system_status.kI = kI; m_system_status.kD = kD;}
 
         // some extra functions required for test
         bool is_closed_loop_mode() const {return m_system_status.mode == ControlMode::CLOSED_LOOP;}
         void set_fault_status(bool fault) {m_system_status.fault = fault;}
-        void set_pid_gains(float kP, float kI, float kD) {m_system_status.kP = kP; m_system_status.kI = kI; m_system_status.kD = kD;}
+        void set_pwm_values(uint8_t left_pwm, uint8_t right_pwm) {m_system_status.left_motor_pwm = left_pwm; m_system_status.right_motor_pwm = right_pwm;}
 
     private:
         SystemStatus m_system_status;
@@ -55,7 +56,7 @@ MockController controller;
 
 void serial_test_setup()
 {
-
+    Serial.flush();
 }
 
 void serial_test_teardown()
@@ -66,6 +67,7 @@ void serial_test_teardown()
 void test_serial_type()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 }
 
 // This test will send a valid command packet to the serial interface, and verify that the command
@@ -75,6 +77,7 @@ void test_serial_type()
 void test_set_motor_speed_command()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Create a valid command packet for setting motor speeds
     uint8_t command_packet[11];
@@ -125,6 +128,7 @@ void test_set_motor_speed_command()
 void test_enable_disable_driver()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Enable the driver
     uint8_t enable_command[3];
@@ -185,6 +189,7 @@ void test_enable_disable_driver()
 void test_read_fault()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Set the fault status
     controller.set_fault_status(true);
@@ -231,6 +236,7 @@ void test_read_fault()
 void test_read_clear_encoders()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Read the encoders to confirm they have the values initialized in the constructor
     // for the mock controller
@@ -287,6 +293,7 @@ void test_read_clear_encoders()
 void test_get_motor_speeds()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Read the motor speeds to confirm they have the values initialized in the constructor
     // for the mock controller
@@ -320,6 +327,7 @@ void test_get_motor_speeds()
 void test_set_control_mode()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     // Set the control mode to closed loop
     uint8_t set_mode_command[3];
@@ -381,11 +389,108 @@ void test_set_control_mode()
     TEST_ASSERT_TRUE(controller.is_closed_loop_mode());
 }
 
+void test_set_get_pid_gains()
+{
+    SerialInterface interface(&controller);
+    Serial.flush();
+
+    float kP = 1.23f;
+    float kI = 4.56f;
+    float kD = 7.89f;
+
+    // Set the PID gains
+    uint8_t set_gains_command[15];
+    set_gains_command[0] = SerialInterface::CMD_SET_PID_GAINS;
+    memcpy(&set_gains_command[1], &kP, sizeof(float));
+    memcpy(&set_gains_command[5], &kI, sizeof(float));
+    memcpy(&set_gains_command[9], &kD, sizeof(float));
+    uint16_t crc = calcCRC16(set_gains_command, 13);
+    set_gains_command[13] = static_cast<uint8_t>(crc >> 8);
+    set_gains_command[14] = static_cast<uint8_t>(crc & 0xFF);
+
+    Serial.load_read_buffer(set_gains_command, sizeof(set_gains_command));
+    interface.process_commands();
+    std::this_thread::sleep_for(std::chrono::milliseconds(SerialInterface::SERIAL_TIMEOUT_MS + 2));
+    interface.process_commands();
+
+    // Check the response
+    uint8_t response[20];       // size 20 for the 16 byte read response below
+    size_t resp_len = Serial.retrieve_write_buffer(response, sizeof(response));
+    TEST_ASSERT_EQUAL(4, resp_len);
+    TEST_ASSERT_EQUAL(SerialInterface::CMD_SET_PID_GAINS | SerialInterface::ACK_BIT | SerialInterface::SUCCESS_BIT, response[0]);
+    TEST_ASSERT_EQUAL(0, response[1]);
+    TEST_ASSERT_EQUAL(calcCRC16(response, 2), (response[2] << 8) | response[3]);
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kP, controller.get_status().kP);
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kI, controller.get_status().kI);
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kD, controller.get_status().kD);
+
+    // Get the PID gains
+    uint8_t get_gains_command[3];
+    get_gains_command[0] = SerialInterface::CMD_GET_PID_GAINS;
+    crc = calcCRC16(get_gains_command, 1);
+    get_gains_command[1] = static_cast<uint8_t>(crc >> 8);
+    get_gains_command[2] = static_cast<uint8_t>(crc & 0xFF);
+
+    Serial.load_read_buffer(get_gains_command, sizeof(get_gains_command));
+    interface.process_commands();
+    std::this_thread::sleep_for(std::chrono::milliseconds(SerialInterface::SERIAL_TIMEOUT_MS + 2));
+    interface.process_commands();
+
+    // Check the response
+    resp_len = Serial.retrieve_write_buffer(response, sizeof(response));
+    TEST_ASSERT_EQUAL(16, resp_len);
+    TEST_ASSERT_EQUAL(SerialInterface::CMD_GET_PID_GAINS | SerialInterface::ACK_BIT | SerialInterface::SUCCESS_BIT, response[0]);
+    TEST_ASSERT_EQUAL(12, response[1]);  // payload length
+
+    float k;
+    memcpy(&k, &response[2], sizeof(float));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kP, k);
+    memcpy(&k, &response[6], sizeof(float));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kI, k);
+    memcpy(&k, &response[10], sizeof(float));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kD, k);
+
+    TEST_ASSERT_EQUAL(calcCRC16(response, 14), (response[14] << 8) | response[15]);
+}
+
+void test_get_pwm()
+{
+    SerialInterface interface(&controller);
+    Serial.flush();
+
+    // set up the controller to have non-zero PWM values
+    controller.set_pwm_values(123, 234);
+
+    // Send the read PWM command
+    uint8_t get_PWM_command[3];
+    get_PWM_command[0] = SerialInterface::CMD_GET_PWM_VALUES;
+    uint16_t crc = calcCRC16(get_PWM_command, 1);
+    get_PWM_command[1] = static_cast<uint8_t>(crc >> 8);
+    get_PWM_command[2] = static_cast<uint8_t>(crc & 0xFF);
+
+    Serial.load_read_buffer(get_PWM_command, sizeof(get_PWM_command));
+    interface.process_commands();
+    std::this_thread::sleep_for(std::chrono::milliseconds(SerialInterface::SERIAL_TIMEOUT_MS + 2));
+    interface.process_commands();
+
+    // Check the response
+    uint8_t response[10];
+    size_t resp_len = Serial.retrieve_write_buffer(response, sizeof(response));
+    
+    // should have 6 bytes (command, payload length, 2 PWM values, and 2 byte CRC)
+    TEST_ASSERT_EQUAL(6, resp_len);
+    TEST_ASSERT_EQUAL(SerialInterface::CMD_GET_PWM_VALUES | SerialInterface::ACK_BIT | SerialInterface::SUCCESS_BIT, response[0]);
+    TEST_ASSERT_EQUAL(2, response[1]);
+    TEST_ASSERT_EQUAL(response[2], controller.get_status().left_motor_pwm);
+    TEST_ASSERT_EQUAL(response[3], controller.get_status().right_motor_pwm);
+    TEST_ASSERT_EQUAL(calcCRC16(response, 4), (response[4] << 8) | response[5]);
+}
 
 // Confirm that the command fails and we get no response on the serial bus
 void test_invalid_command()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     uint8_t bad_command[3];
     bad_command[0] = SerialInterface::ACK_BIT; // Invalid command byte
@@ -410,6 +515,7 @@ void test_invalid_command()
 void test_invalid_payload()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     uint8_t bad_command[3];
     bad_command[0] = SerialInterface::CMD_SET_MOTOR_SPEEDS; // Valid command byte
@@ -434,6 +540,7 @@ void test_invalid_payload()
 void test_invalid_crc()
 {
     SerialInterface interface(&controller);
+    Serial.flush();
 
     uint8_t bad_crc[11];
     bad_crc[0] = SerialInterface::CMD_SET_MOTOR_SPEEDS; // Valid command byte

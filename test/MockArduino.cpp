@@ -81,3 +81,9 @@ size_t MockSerial::retrieve_write_buffer(unsigned char* buffer, size_t max_buffe
     m_write_buffer.clear(); // Clear the buffer after retrieval
     return size;
 }
+
+void MockSerial::flush()
+{
+    m_write_buffer.clear();
+    m_read_buffer.clear();
+}

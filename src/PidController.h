@@ -33,9 +33,9 @@ class PidController
     void set_kD(float kD);
 
     // motor parameters
-    static constexpr uint32_t ENCODER_CPR = 12;         // counts per revolution
-    static constexpr uint32_t MOTOR_GEAR_RATIO = 380;
-    static constexpr float MAX_OUTPUT_SPEED_RPM = 84.;  // unloaded speed
+    static constexpr uint32_t ENCODER_CPR = 64;         // counts per revolution
+    static constexpr uint32_t MOTOR_GEAR_RATIO = 50;
+    static constexpr float MAX_OUTPUT_SPEED_RPM = 200.;  // unloaded speed
     static constexpr uint32_t MAX_CONTROL_VALUE = UINT8_MAX;  // equal to the maximum PWM duty cycle
 
     // motor max speed, encoder counts per second

@@ -49,17 +49,13 @@ class MotorController : public IMotorController
     void update_controller();
 
     // public API for serial commands
-    const SystemStatus& get_status() const {return m_system_status;}
-    void enable_drive();
-    void disable_drive();
-    void set_mode(ControlMode mode);
-    void set_target_speed(MotorChannel channel, float speed_cps);
-    void clear_encoders();
-    void set_pid_gains(float kP, float kI, float kD);
-
-    float get_kP() const {return m_system_status.kP;}
-    float get_kI() const {return m_system_status.kI;}
-    float get_kD() const {return m_system_status.kD;}
+    const SystemStatus& get_status() const override {return m_system_status;}
+    void enable_drive() override;
+    void disable_drive() override;
+    void set_mode(ControlMode mode) override;
+    void set_target_speed(MotorChannel channel, float speed_cps) override;
+    void clear_encoders() override;
+    void set_pid_gains(float kP, float kI, float kD) override;
 
   private:
     Encoder *m_p_left_encoder, *m_p_right_encoder;

@@ -1,6 +1,7 @@
 import tkinter as tk
 import time
 import threading
+import numpy as np
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -18,12 +19,14 @@ class MotorControlGUI:
         # Speed Control
         self.left_speed = tk.DoubleVar(value=0)
         self.right_speed = tk.DoubleVar(value=0)
+        self.left_target_speed_data = []
+        self.right_target_speed_data = []
 
-        self.create_scale("Left Speed", self.left_speed, -100, 100, row=0)
-        self.create_scale("Right Speed", self.right_speed, -100, 100, row=1)
+        self.create_scale("Left Speed", self.left_speed, -1000, 1000, row=0)
+        self.create_scale("Right Speed", self.right_speed, -1000, 1000, row=1)
 
         # Control Mode
-        self.control_mode = tk.BooleanVar(value=False)
+        self.control_mode = tk.BooleanVar(value=True)
         tk.Checkbutton(self._master, text="Closed Loop", variable=self.control_mode, command=self.set_control_mode).grid(row=2, column=0, columnspan=2)
 
         # Enable/Disable
@@ -134,18 +137,30 @@ class MotorControlGUI:
             left_speed = self.left_speed.get()
             right_speed = self.right_speed.get()
             success = self.controller.set_target_speeds(left_speed, right_speed)
+            if success:
+                self.left_target_speed_data.append(left_speed)
+                self.right_target_speed_data.append(right_speed)
+            else:
+                self.left_target_speed_data.append(np.nan)
+                self.right_target_speed_data.append(np.nan)
             self.check_status(success, "Set Target Speeds")
 
             success, (left_speed, right_speed) = self.controller.get_motor_speeds()
             if success:
                 self.left_speed_data.append(left_speed)
                 self.right_speed_data.append(right_speed)
+            else:
+                self.left_speed_data.append(np.nan)
+                self.right_speed_data.append(np.nan)
             self.check_status(success, "Get Motor Speeds")
 
             success, (left_count, right_count) = self.controller.get_encoder_counts()
             if success:
                 self.left_encoder_data.append(left_count)
                 self.right_encoder_data.append(right_count)
+            else:
+                self.left_encoder_data.append(np.nan)
+                self.right_encoder_data.append(np.nan)
             self.check_status(success, "Get Encoder Counts")
 
             success, is_faulted = self.controller.read_fault()
@@ -160,6 +175,9 @@ class MotorControlGUI:
             if success:
                 self.left_pwm_data.append(pwm_values[0])
                 self.right_pwm_data.append(pwm_values[1])
+            else:
+                self.left_pwm_data.append(np.nan)
+                self.right_pwm_data.append(np.nan)
             self.check_status(success, "Get PWM Values")
 
             if not self.editing_pid_gains:
@@ -184,6 +202,8 @@ class MotorControlGUI:
             self.right_encoder_data.pop(0)
             self.left_speed_data.pop(0)
             self.right_speed_data.pop(0)
+            self.left_target_speed_data.pop(0)
+            self.right_target_speed_data.pop(0)
             self.left_pwm_data.pop(0)
             self.right_pwm_data.pop(0)
 
@@ -200,15 +220,17 @@ class MotorControlGUI:
         self.ax[0].set_ylim(min_encoder - 10, max_encoder + 10)
 
         self.ax[1].clear()
-        self.ax[1].plot(self.time_data, self.left_speed_data, label="Left Speed")
-        self.ax[1].plot(self.time_data, self.right_speed_data, label="Right Speed")
+        self.ax[1].plot(self.time_data, self.left_speed_data, label="Left Speed (Measured)", color='blue')
+        self.ax[1].plot(self.time_data, self.right_speed_data, label="Right Speed (Measured)", color='green')
+        self.ax[1].plot(self.time_data, self.left_target_speed_data, label="Left Speed (Target)", linestyle='--', color='blue')
+        self.ax[1].plot(self.time_data, self.right_target_speed_data, label="Right Speed (Target)", linestyle='--', color='green')
         self.ax[1].set_xlabel("Time")
         self.ax[1].set_ylabel("Speed")
         self.ax[1].legend()
         self.ax[1].grid()
 
-        min_speed = min(min(self.left_speed_data), min(self.right_speed_data))
-        max_speed = max(max(self.left_speed_data), max(self.right_speed_data))
+        min_speed = min(min(self.left_speed_data), min(self.right_speed_data), min(self.left_target_speed_data), min(self.right_target_speed_data))
+        max_speed = max(max(self.left_speed_data), max(self.right_speed_data), max(self.left_target_speed_data), max(self.right_target_speed_data))
         self.ax[1].set_ylim(min_speed - 10, max_speed + 10)
 
         self.ax[2].clear()

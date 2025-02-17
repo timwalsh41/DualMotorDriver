@@ -27,7 +27,7 @@ typedef struct
   CommandCallback callback;
 } CommandDefinition;
 
-#define NUM_COMMANDS 9
+#define NUM_COMMANDS 12
 #define SERIAL_BUFFER_SIZE 16
 
 class SerialInterface

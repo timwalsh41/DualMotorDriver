@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_read_clear_encoders);
     RUN_TEST(test_get_motor_speeds);
     RUN_TEST(test_set_control_mode);
+    RUN_TEST(test_set_get_pid_gains);
+    RUN_TEST(test_get_pwm);
 
     RUN_TEST(test_pid_type);
     RUN_TEST(test_pid_speed_calculation);

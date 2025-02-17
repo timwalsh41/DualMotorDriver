@@ -32,6 +32,8 @@ void test_read_fault();
 void test_read_clear_encoders();
 void test_get_motor_speeds();
 void test_set_control_mode();
+void test_set_get_pid_gains();
+void test_get_pwm();
 
 // Mocked Arduino functionality
 unsigned long millis();
@@ -48,6 +50,8 @@ class MockSerial
 
         void load_read_buffer(unsigned char*, size_t);
         size_t retrieve_write_buffer(unsigned char*, size_t buffer_size);
+
+        void flush();
 
     private:
         std::deque<unsigned char> m_read_buffer; // Use deque for read buffer
