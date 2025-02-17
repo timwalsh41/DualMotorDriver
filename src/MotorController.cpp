@@ -18,43 +18,15 @@ MotorController::MotorController(Encoder* p_left_encoder, Encoder* p_right_encod
 
 void MotorController::update_controller()
 {
-  float candidate_control_value;
-  uint8_t target_pwm;
+  PWM target_pwm;
 
-  // left channel control and status updates
-  candidate_control_value = m_p_left_pid_controller->run_controller();
-
-  if (candidate_control_value < 0)
-  {
-    m_driver.set_channel_direction(MotorChannel::LEFT, false);
-    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, MAX_PWM_VALUE));
-  }
-  else
-  {
-    m_driver.set_channel_direction(MotorChannel::LEFT, true);
-    target_pwm = static_cast<uint8_t>(min(candidate_control_value, MAX_PWM_VALUE));
-  }
-
-  m_driver.set_channel_pwm(MotorChannel::LEFT, target_pwm);
+  target_pwm = update_pid_channel(m_p_left_pid_controller, MotorChannel::LEFT);
   m_system_status.left_motor_current_speed_cps = m_p_left_pid_controller->get_current_speed_cps();
   m_system_status.left_encoder_counts = m_p_left_encoder->get_count();
   m_system_status.left_motor_pwm = target_pwm;
 
-  // right channel control and status updates
-  candidate_control_value = m_p_right_pid_controller->run_controller();
-
-  if (candidate_control_value < 0)
-  {
-    m_driver.set_channel_direction(MotorChannel::RIGHT, false);
-    target_pwm = static_cast<uint8_t>(min(-1*candidate_control_value, MAX_PWM_VALUE));
-  }
-  else
-  {
-    m_driver.set_channel_direction(MotorChannel::RIGHT, true);
-    target_pwm = static_cast<uint8_t>(min(candidate_control_value, MAX_PWM_VALUE));
-  }
-
-  m_driver.set_channel_pwm(MotorChannel::RIGHT, target_pwm);
+  
+  target_pwm = update_pid_channel(m_p_right_pid_controller, MotorChannel::RIGHT);
   m_system_status.right_motor_current_speed_cps = m_p_right_pid_controller->get_current_speed_cps();
   m_system_status.right_encoder_counts = m_p_right_encoder->get_count();
   m_system_status.right_motor_pwm = target_pwm;
@@ -120,4 +92,31 @@ void MotorController::set_pid_gains(float kP, float kI, float kD)
   m_system_status.kP = kP;
   m_system_status.kI = kI;
   m_system_status.kD = kD;
+}
+
+PWM MotorController::update_pid_channel(PidController* p_pid_controller, MotorChannel channel)
+{
+  // Run channel control and status updates, getting nominal control value
+  float candidate_control_value = p_pid_controller->run_controller();
+  PWM target_pwm;
+
+  if (candidate_control_value < 0)
+  {
+    m_driver.set_channel_direction(channel, false);
+    target_pwm = static_cast<PWM>(min(-1*candidate_control_value, MAX_PWM_VALUE));
+  }
+  else
+  {
+    m_driver.set_channel_direction(channel, true);
+    target_pwm = static_cast<PWM>(min(candidate_control_value, MAX_PWM_VALUE));
+  }
+
+  // don't apply a control signal if it conflicts with the direction of motion
+  if (candidate_control_value*p_pid_controller->get_target_speed_cps() < 0)
+  {
+    target_pwm = 0;
+  }
+
+  m_driver.set_channel_pwm(channel, target_pwm);
+  return target_pwm;
 }

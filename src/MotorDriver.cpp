@@ -10,11 +10,6 @@ MotorDriver::MotorDriver()
   set_channel_direction(MotorChannel::RIGHT, true);
 }
 
-bool m_is_enabled{false};
-uint8_t m_left_pwm{0}, m_right_pwm{0};
-bool m_left_direction{true}, m_right_direction{true};
-bool m_fault{false};
-
 void MotorDriver::update()
 {
   // enable signal is active high
@@ -30,7 +25,7 @@ void MotorDriver::update()
   m_fault = !digitalRead(DRIVER_FAULT);
 }
 
-void MotorDriver::set_channel_pwm(MotorChannel channel, uint8_t pwm)
+void MotorDriver::set_channel_pwm(MotorChannel channel, PWM pwm)
 {
   if (!m_is_enabled)
     return;

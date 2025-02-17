@@ -13,8 +13,8 @@ typedef struct
   float right_motor_current_speed_cps{0.};
   int32_t left_encoder_counts{0};
   int32_t right_encoder_counts{0};
-  uint8_t left_motor_pwm{0};
-  uint8_t right_motor_pwm{0};
+  PWM left_motor_pwm{0};
+  PWM right_motor_pwm{0};
 
   float kP{0.};
   float kI{0.};
@@ -64,6 +64,8 @@ class MotorController : public IMotorController
 
     ControlMode m_mode{CLOSED_LOOP};
     SystemStatus m_system_status;
+
+    PWM update_pid_channel(PidController*, MotorChannel);
 };
 
 #endif

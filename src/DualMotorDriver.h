@@ -3,8 +3,10 @@
 
 #include "stdint.h"
 
+using PWM = uint8_t;
+
 // Global limit for PWM values
-constexpr uint8_t MAX_PWM_VALUE = 175;
+constexpr PWM MAX_PWM_VALUE = 175;
 
 // Pin definitions
 #define ENCODER_LEFT_CHANNEL_A    2

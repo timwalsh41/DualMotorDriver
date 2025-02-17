@@ -22,7 +22,7 @@ void pid_test_teardown()
 
 // set encoder counts and update PID controller to get to a specific
 // value for the current speed, and return the control signal
-float set_speed_and_run_controller(float measured_speed_cps, size_t num_iterations = SPEED_SAMPLE_BUFFER_LENGTH)
+float set_speed_and_run_controller(float measured_speed_cps, size_t num_iterations = SPEED_SAMPLE_BUFFER_LENGTH + PWM_SAMPLE_BUFFER_LENGTH)
 {
     int32_t counts = encoder.get_count();
     
@@ -104,7 +104,8 @@ void test_proportional_closed_loop_control()
     pid_controller->set_mode(CLOSED_LOOP);
     pid_controller->set_target_speed(target_speed);
 
-    control_signal = set_speed_and_run_controller(actual_speed);
+    // the time constant on the update is the speed sample buffer time plus the PWM sample buffer time
+    control_signal = set_speed_and_run_controller(actual_speed, SPEED_SAMPLE_BUFFER_LENGTH + PWM_SAMPLE_BUFFER_LENGTH);
 
     TEST_ASSERT_FLOAT_WITHIN(0.02*target_speed, kP*(target_speed - actual_speed), control_signal);
 }
@@ -115,28 +116,39 @@ void test_integral_closed_loop_control()
     float actual_speed = 100.f;
     float control_signal(0.);
     float kI = 1.;
+
+    // start with zero PID gain so there is no accumulated control signal
     pid_controller->set_kP(0);
-    pid_controller->set_kI(kI);
+    pid_controller->set_kI(0);
     pid_controller->set_kD(0);
 
     pid_controller->set_mode(CLOSED_LOOP);
-    pid_controller->set_target_speed(0);
+
+    // set the target speed to the actual speed
+    pid_controller->set_target_speed(actual_speed);
 
     // first we'll run the update loop to load the speed buffer with the actual speed
-    set_speed_and_run_controller(actual_speed);
+    set_speed_and_run_controller(actual_speed, SPEED_SAMPLE_BUFFER_LENGTH);
 
-    // now we'll set the target speed, which clears the accumulated error
+    // now we'll set the target speed again, which clears the accumulated error
     pid_controller->set_target_speed(target_speed);
     
-    // run the controller for a few iterations to accumulate error
+    // now we'll set the integral gain run the controller for a few iterations to accumulate error
+    pid_controller->set_kI(kI);
     control_signal = set_speed_and_run_controller(actual_speed, 2);
 
-    // 15% seems to be about the best we can do consistently here
-    TEST_ASSERT_FLOAT_WITHIN(0.15*3*kI*(target_speed - actual_speed), 3*kI*(target_speed - actual_speed), control_signal);
+    // we now have 3 iterations where the error is about (target_speed - actual_speed), so the accumulated
+    // error is about 6*(target_speed - actual_speed), which is then filtered into the otherwise empty 
+    // control signal buffer
+    float expected_control = 6*kI*(target_speed - actual_speed)/PWM_SAMPLE_BUFFER_LENGTH;
 
-    // now verify we don't exceed max error
+    // 10% seems to be about the best we can do consistently here
+    TEST_ASSERT_FLOAT_WITHIN(0.1*expected_control, expected_control, control_signal);
+
+    // now verify we don't exceed max error - we'll crank up the target speed so we have a large error, and
+    // we'll need a long run time to let the error saturate and then the filtered control signal to catch up
     pid_controller->set_target_speed(2*target_speed);
-    control_signal = set_speed_and_run_controller(actual_speed, 10);
+    control_signal = set_speed_and_run_controller(actual_speed);
 
     TEST_ASSERT_FLOAT_WITHIN(0.1, kI*PidController::MAX_ACCUMULATED_ERROR, control_signal);
 }

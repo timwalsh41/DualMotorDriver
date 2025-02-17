@@ -10,6 +10,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import DualMotorCommander
 
+# range of speeds for selector
+SPEED_RANGE_CPS = 1e4 # 1e4 cps ~ 200 rpm for 50:1 motor
+UPDATE_TIME_S = 0.025
 class MotorControlGUI:
     def __init__(self, controller: DualMotorCommander):
         self._master = tk.Tk()
@@ -24,9 +27,9 @@ class MotorControlGUI:
         self.left_target_speed_data = []
         self.right_target_speed_data = []
 
-        SPEED_RANGE = 1e4
-        self.create_scale("Left Speed", self.left_speed, -SPEED_RANGE, SPEED_RANGE, row=0)
-        self.create_scale("Right Speed", self.right_speed, -SPEED_RANGE, SPEED_RANGE, row=1)
+        
+        self.create_scale("Left Speed", self.left_speed, -SPEED_RANGE_CPS, SPEED_RANGE_CPS, row=0)
+        self.create_scale("Right Speed", self.right_speed, -SPEED_RANGE_CPS, SPEED_RANGE_CPS, row=1)
 
         # Control Mode
         self.control_mode = tk.BooleanVar(value=True)
@@ -210,7 +213,7 @@ class MotorControlGUI:
             self.check_status(success, "Get PID Gains")
 
             self.update_plot()
-            time.sleep(0.1)
+            time.sleep(UPDATE_TIME_S)
 
     def check_status(self, success, operation):
         if not success:

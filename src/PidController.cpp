@@ -2,6 +2,7 @@
 #include "PidController.h"
 #include "Utility.h"
 #include "DualMotorDriver.h"
+// #include <iostream>
 
 PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
       m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, 
@@ -36,22 +37,12 @@ float PidController::run_controller()
     control_signal = m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
     m_last_error = error;
 
-    if (control_signal*m_target_speed_cps < 0)
-    {
-      // do not apply control to fight the direction the motor is spinning
-      control_signal = 0;
-    }
-    else if (control_signal > MAX_PWM_VALUE)
-    {
-      control_signal = MAX_PWM_VALUE;
-    }
-    else if (control_signal < -MAX_PWM_VALUE)
-    {
-        control_signal = -MAX_PWM_VALUE;
-    }
+    // std::cout << "target = " << m_target_speed_cps << " current = " << m_current_speed_cps << " error = " << error << " raw control = " << control_signal;;
 
     // Update the filtered control signal
     update_filtered_pwm(control_signal);
+
+    // std::cout << " clamped control " << control_signal << " filtered control " << m_filtered_pwm << std::endl;
 
     return m_filtered_pwm;
   }
