@@ -77,7 +77,7 @@ void SerialInterface::process_commands()
 
     // BEWARE: we are creating a memory pool here to hold the outbound payoad populated by the command callback
     // function, we need to ensure that the payload is never larger than the pool size
-    uint8_t outbound_payload[16];
+    uint8_t outbound_payload[PAYLOAD_BUFFER_POOL_SIZE];
 
     // run command
     bool result = incoming_command->callback(command_byte, &m_processing_buffer[1], incoming_command->payload_length, outbound_payload, m_p_controller);
@@ -188,7 +188,7 @@ void SerialInterface::build_command_map()
 {
   // BEWARE: we are creating a memory pool here to hold the outbound payoad populated by the command callback
   // function, we need to ensure that the payload is never larger than the pool size
-  // Update the pool size in the process_commands function as needed
+  // Update the pool size in the SerialInterface class definition as needed
 
   size_t map_idx = 0;
   m_command_map = new CommandDefinition[NUM_COMMANDS];
@@ -328,4 +328,57 @@ void SerialInterface::build_command_map()
       return true;
     };
   map_idx++;
+
+  // SET PID GAINS
+  // Incoming payload length: 12
+  // Payload[0:3]: K_p, float
+  // Payload[4:7]: K_i, float
+  // Payload[8:11]: K_d, float
+  // No outgoing payload
+  m_command_map[map_idx].command = CMD_SET_PID_GAINS;
+  m_command_map[map_idx].payload_length = 12;
+  m_command_map[map_idx].response_length = 0;
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
+    {
+      p_controller->set_pid_gains(bytes_to_float(&incoming_payload[0]), bytes_to_float(&incoming_payload[4]), bytes_to_float(&incoming_payload[8]));
+
+      return true;
+    };
+  map_idx++;
+
+  // GET PID GAINS
+  // No incoming payload
+  // Outgoing payload length: 12
+  // Payload[0:3]: K_p, float
+  // Payload[4:7]: K_i, float
+  // Payload[8:11]: K_d, float
+  m_command_map[map_idx].command = CMD_GET_PID_GAINS;
+  m_command_map[map_idx].payload_length = 0;
+  m_command_map[map_idx].response_length = 12;
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
+    {
+      float_to_bytes(p_controller->get_status().kP, &outgoing_payload[0]);
+      float_to_bytes(p_controller->get_status().kI, &outgoing_payload[4]);
+      float_to_bytes(p_controller->get_status().kD, &outgoing_payload[8]);
+
+      return true;
+    };
+  map_idx++;
+
+  // GET PWM VALUES
+  // No incoming payload
+  // Outgoing payload length: 2
+  // Payload[0]: left motor PWM value, uint8_t
+  // Payload[1]: right motor PWM value, uint8_t
+  m_command_map[map_idx].command = CMD_GET_PWM_VALUES;
+  m_command_map[map_idx].payload_length = 0;
+  m_command_map[map_idx].response_length = 2;
+  m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
+    {
+      outgoing_payload[0] = p_controller->get_status().left_motor_pwm;
+      outgoing_payload[1] = p_controller->get_status().right_motor_pwm;
+
+      return true;
+    };
+
 }

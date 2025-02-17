@@ -8,6 +8,7 @@ SERIAL_DELAY_TIME_S = 0.01
 
 # format string for byte packing, little-endian, 2 4-byte floats
 DUAL_FLOAT_PACK_FMT = '<ff'
+TRIPLE_FLOAT_PACK_FMT = '<fff'
 
 # format string for byte packing, little-endian, 2 4-byte signed integers
 DUAL_INT32_PACK_FMT = '<ll'
@@ -97,5 +98,27 @@ class DualMotorCommander:
         if result[0]:
             # the payload in the second element has the fault status in a single element byte array
             return (True, [result[1][0] > 0])
+
+        return (False, [])
+    
+    def set_pid_gains(self, kp: float, ki: float, kd: float):
+        payload = pack(TRIPLE_FLOAT_PACK_FMT, kp, ki, kd)
+        return self._execute_command(CommandInterface.CommandDefinitionMap[CommandInterface.CMD_SET_PID_GAINS], payload)[0]
+    
+    def get_pid_gains(self):
+        result = self._execute_command(CommandInterface.CommandDefinitionMap[CommandInterface.CMD_GET_PID_GAINS])
+
+        if result[0]:
+            pid_gains = unpack(TRIPLE_FLOAT_PACK_FMT, result[1])
+            return (True, pid_gains)
+
+        return (False, [])
+    
+    def get_pwm_values(self):
+        result = self._execute_command(CommandInterface.CommandDefinitionMap[CommandInterface.CMD_GET_PWM_VALUES])
+
+        if result[0]:
+            pwm_values = (result[1][0], result[1][1])
+            return (True, pwm_values)
 
         return (False, [])

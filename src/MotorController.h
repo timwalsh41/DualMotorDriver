@@ -16,6 +16,10 @@ typedef struct
   uint8_t left_motor_pwm{0};
   uint8_t right_motor_pwm{0};
 
+  float kP{0.};
+  float kI{0.};
+  float kD{0.};
+
   bool enabled{false};
   bool fault{false};
   ControlMode mode{CLOSED_LOOP};
@@ -32,6 +36,7 @@ class IMotorController
     virtual void set_target_speed(MotorChannel channel, float speed_cps) = 0;
     virtual void clear_encoders() = 0;
     virtual const SystemStatus& get_status() const = 0;
+    virtual void set_pid_gains(float kP, float kI, float kD) = 0;
 };
 
 class MotorController : public IMotorController
@@ -50,6 +55,11 @@ class MotorController : public IMotorController
     void set_mode(ControlMode mode);
     void set_target_speed(MotorChannel channel, float speed_cps);
     void clear_encoders();
+    void set_pid_gains(float kP, float kI, float kD);
+
+    float get_kP() const {return m_system_status.kP;}
+    float get_kI() const {return m_system_status.kI;}
+    float get_kD() const {return m_system_status.kD;}
 
   private:
     Encoder *m_p_left_encoder, *m_p_right_encoder;

@@ -44,6 +44,7 @@ class MockController : public IMotorController
         // some extra functions required for test
         bool is_closed_loop_mode() const {return m_system_status.mode == ControlMode::CLOSED_LOOP;}
         void set_fault_status(bool fault) {m_system_status.fault = fault;}
+        void set_pid_gains(float kP, float kI, float kD) {m_system_status.kP = kP; m_system_status.kI = kI; m_system_status.kD = kD;}
 
     private:
         SystemStatus m_system_status;

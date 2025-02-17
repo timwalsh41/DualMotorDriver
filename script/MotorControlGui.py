@@ -38,7 +38,7 @@ class MotorControlGUI:
         self.status_label.grid(row=5, column=0, columnspan=2)
 
         # Plotting
-        self.fig, self.ax = plt.subplots(2, 1, figsize=(6, 4))
+        self.fig, self.ax = plt.subplots(3, 1, figsize=(6, 6))
         self.canvas = FigureCanvasTkAgg(self.fig, master=self._master)
         self.canvas.get_tk_widget().grid(row=6, column=0, columnspan=2)
         self.left_encoder_data = []
@@ -46,14 +46,25 @@ class MotorControlGUI:
         self.left_speed_data = []
         self.right_speed_data = []
         self.time_data = []
-        self.left_velocity_data = []
-        self.right_velocity_data = []
+        self.left_pwm_data = []
+        self.right_pwm_data = []
         self.max_data_points = 200
 
         self.running = True
 
         # Exit Button
         tk.Button(self._master, text="Exit", command=self.exit_program).grid(row=7, column=0, columnspan=2)
+
+        # PID Gains
+        self.kp = tk.DoubleVar(value=0)
+        self.ki = tk.DoubleVar(value=0)
+        self.kd = tk.DoubleVar(value=0)
+        self.editing_pid_gains = False
+
+        self.create_entry("Kp", self.kp, row=8, on_focus=self.on_pid_gain_focus, on_focus_out=self.on_pid_gain_focus_out)
+        self.create_entry("Ki", self.ki, row=9, on_focus=self.on_pid_gain_focus, on_focus_out=self.on_pid_gain_focus_out)
+        self.create_entry("Kd", self.kd, row=10, on_focus=self.on_pid_gain_focus, on_focus_out=self.on_pid_gain_focus_out)
+        tk.Button(self._master, text="Set PID Gains", command=self.set_pid_gains).grid(row=11, column=0, columnspan=2)
 
         # Handle window close event
         self._master.protocol("WM_DELETE_WINDOW", self.exit_program)
@@ -70,6 +81,21 @@ class MotorControlGUI:
         tk.Label(self._master, text=label).grid(row=row, column=0)
         scale = tk.Scale(self._master, from_=min_val, to=max_val, orient=tk.HORIZONTAL, variable=variable)
         scale.grid(row=row, column=1)
+
+    def create_entry(self, label, variable, row, on_focus=None, on_focus_out=None):
+        tk.Label(self._master, text=label).grid(row=row, column=0)
+        entry = tk.Entry(self._master, textvariable=variable)
+        entry.grid(row=row, column=1)
+        if on_focus:
+            entry.bind("<FocusIn>", on_focus)
+        if on_focus_out:
+            entry.bind("<FocusOut>", on_focus_out)
+
+    def on_pid_gain_focus(self, event):
+        self.editing_pid_gains = True
+
+    def on_pid_gain_focus_out(self, event):
+        self.editing_pid_gains = False
 
     def set_control_mode(self):
         if self.control_mode.get():
@@ -88,6 +114,13 @@ class MotorControlGUI:
     def clear_encoders(self):
         success = self.controller.clear_encoder_counts()
         self.check_status(success, "Clear Encoders")
+
+    def set_pid_gains(self):
+        kp = self.kp.get()
+        ki = self.ki.get()
+        kd = self.kd.get()
+        success = self.controller.set_pid_gains(kp, ki, kd)
+        self.check_status(success, "Set PID Gains")
 
     def exit_program(self):
         self.running = False
@@ -123,6 +156,20 @@ class MotorControlGUI:
                     self.status_label.config(text="Status: Running", fg="black")
             self.check_status(success, "Read Fault")
 
+            success, pwm_values = self.controller.get_pwm_values()
+            if success:
+                self.left_pwm_data.append(pwm_values[0])
+                self.right_pwm_data.append(pwm_values[1])
+            self.check_status(success, "Get PWM Values")
+
+            if not self.editing_pid_gains:
+                success, pid_gains = self.controller.get_pid_gains()
+                if success:
+                    self.kp.set(pid_gains[0])
+                    self.ki.set(pid_gains[1])
+                    self.kd.set(pid_gains[2])
+                self.check_status(success, "Get PID Gains")
+
             self.update_plot()
             time.sleep(0.1)
 
@@ -135,8 +182,10 @@ class MotorControlGUI:
             self.time_data.pop(0)
             self.left_encoder_data.pop(0)
             self.right_encoder_data.pop(0)
-            self.left_velocity_data.pop(0)
-            self.right_velocity_data.pop(0)
+            self.left_speed_data.pop(0)
+            self.right_speed_data.pop(0)
+            self.left_pwm_data.pop(0)
+            self.right_pwm_data.pop(0)
 
         self.ax[0].clear()
         self.ax[0].plot(self.time_data, self.left_encoder_data, label="Left Encoder")
@@ -144,6 +193,7 @@ class MotorControlGUI:
         self.ax[0].set_xlabel("Time")
         self.ax[0].set_ylabel("Encoder Count")
         self.ax[0].legend()
+        self.ax[0].grid()
 
         min_encoder = min(min(self.left_encoder_data), min(self.right_encoder_data))
         max_encoder = max(max(self.left_encoder_data), max(self.right_encoder_data))
@@ -155,9 +205,22 @@ class MotorControlGUI:
         self.ax[1].set_xlabel("Time")
         self.ax[1].set_ylabel("Speed")
         self.ax[1].legend()
+        self.ax[1].grid()
 
         min_speed = min(min(self.left_speed_data), min(self.right_speed_data))
         max_speed = max(max(self.left_speed_data), max(self.right_speed_data))
         self.ax[1].set_ylim(min_speed - 10, max_speed + 10)
+
+        self.ax[2].clear()
+        self.ax[2].plot(self.time_data, self.left_pwm_data, label="Left PWM")
+        self.ax[2].plot(self.time_data, self.right_pwm_data, label="Right PWM")
+        self.ax[2].set_xlabel("Time")
+        self.ax[2].set_ylabel("PWM Value")
+        self.ax[2].legend()
+        self.ax[2].grid()
+
+        min_pwm = min(min(self.left_pwm_data), min(self.right_pwm_data))
+        max_pwm = max(max(self.left_pwm_data), max(self.right_pwm_data))
+        self.ax[2].set_ylim(min_pwm - 10, max_pwm + 10)
 
         self.canvas.draw()

@@ -16,6 +16,7 @@ STATUS_BIT = 0x40
 # Valid command codes are therefore 0x00 - 0x3F
 CMD_SET_TARGET_SPEEDS = 0x15
 CMD_GET_MOTOR_SPEEDS = 0x16
+CMD_GET_PWM_VALUES = 0x17
 CMD_SET_OPEN_LOOP_MODE = 0x05
 CMD_SET_CLOSED_LOOP_MODE = 0x06
 CMD_GET_ENCODER_COUNTS = 0x25
@@ -23,6 +24,8 @@ CMD_CLEAR_ENCODER_COUNTS = 0x26
 CMD_ENABLE_DRIVER = 0x35
 CMD_DISABLE_DRIVER = 0x36
 CMD_READ_FAULT = 0x37
+CMD_SET_PID_GAINS = 0x45
+CMD_GET_PID_GAINS = 0x46
 
 CommandDefinitionMap = {
     CMD_SET_TARGET_SPEEDS:      CommandDefinition('CMD_SET_TARGET_SPEEDS',
@@ -51,5 +54,13 @@ CommandDefinitionMap = {
                                                   CMD_DISABLE_DRIVER, 0, 0, None),
     CMD_READ_FAULT:             CommandDefinition('CMD_READ_FAULT',
                                                   'Read fault status',
-                                                  CMD_READ_FAULT, 0, 1, None)
-}
+                                                  CMD_READ_FAULT, 0, 1, None),
+    CMD_SET_PID_GAINS:          CommandDefinition('CMD_SET_PID_GAINS',
+                                                  'Set PID gains',
+                                                  CMD_SET_PID_GAINS, 12, 0, None),
+    CMD_GET_PID_GAINS:          CommandDefinition('CMD_GET_PID_GAINS',
+                                                  'Get PID gains',
+                                                  CMD_GET_PID_GAINS, 0, 12, None),
+    CMD_GET_PWM_VALUES:         CommandDefinition('CMD_GET_PWM_VALUES',
+                                                  'Get current PWM values of each motor',
+                                                  CMD_GET_PWM_VALUES, 0, 2, None)}

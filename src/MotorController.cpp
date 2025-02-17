@@ -9,6 +9,10 @@ MotorController::MotorController(Encoder* p_left_encoder, Encoder* p_right_encod
     {
       m_p_left_pid_controller->set_mode(m_mode);
       m_p_right_pid_controller->set_mode(m_mode);
+
+      m_system_status.kP = m_p_left_pid_controller->get_kP();
+      m_system_status.kI = m_p_left_pid_controller->get_kI();
+      m_system_status.kD = m_p_left_pid_controller->get_kD();
     }
 
 void MotorController::update_controller()
@@ -100,4 +104,19 @@ void MotorController::clear_encoders()
 {
   m_p_left_encoder->reset_count();
   m_p_right_encoder->reset_count();
+}
+
+void MotorController::set_pid_gains(float kP, float kI, float kD)
+{
+  m_p_left_pid_controller->set_kP(kP);
+  m_p_left_pid_controller->set_kI(kI);
+  m_p_left_pid_controller->set_kD(kD);
+
+  m_p_right_pid_controller->set_kP(kP);
+  m_p_right_pid_controller->set_kI(kI);
+  m_p_right_pid_controller->set_kD(kD);
+
+  m_system_status.kP = kP;
+  m_system_status.kI = kI;
+  m_system_status.kD = kD;
 }

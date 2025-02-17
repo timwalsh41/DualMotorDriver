@@ -25,22 +25,22 @@ float bytes_to_float(uint8_t *bytes)
   return data.f;
 }
 
-void float_to_bytes(float val, uint8_t* bytes)
+void float_to_bytes(float source_val, uint8_t* dest_bytes)
 {
   ConversionData data;
 
-  data.f = val;
+  data.f = source_val;
 
   for (size_t i = 0; i < 4; i++)
-    bytes[i] = data.bytes[i];
+    dest_bytes[i] = data.bytes[i];
 }
 
-void int32_to_bytes(int32_t val, uint8_t* bytes)
+void int32_to_bytes(int32_t source_val, uint8_t* dest_bytes)
 {
   ConversionData data;
 
-  data.i = val;
+  data.i = source_val;
 
   for (size_t i = 0; i < 4; i++)
-    bytes[i] = data.bytes[i];
+    dest_bytes[i] = data.bytes[i];
 }

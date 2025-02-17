@@ -46,6 +46,7 @@ class SerialInterface
 
     static constexpr Command CMD_SET_MOTOR_SPEEDS = 0x15;
     static constexpr Command CMD_GET_MOTOR_SPEEDS = 0x16;
+    static constexpr Command CMD_GET_PWM_VALUES = 0x17;
 
     static constexpr Command CMD_GET_ENCODER_COUNTS = 0x25;
     static constexpr Command CMD_CLEAR_ENCODER_COUNTS = 0x26;
@@ -54,7 +55,12 @@ class SerialInterface
     static constexpr Command CMD_DISABLE_DRIVER = 0x36;
     static constexpr Command CMD_READ_FAULT = 0x37;
 
+    static constexpr Command CMD_SET_PID_GAINS = 0x45;
+    static constexpr Command CMD_GET_PID_GAINS = 0x46;
+
     static constexpr uint32_t SERIAL_TIMEOUT_MS = 4;
+
+    static constexpr size_t PAYLOAD_BUFFER_POOL_SIZE = 16;
 
   private:
     void build_command_map();
@@ -63,6 +69,7 @@ class SerialInterface
     void hand_off_command_packet();
     bool get_command_definition(CommandDefinition** command);
 
+    // Note we are using an array here rather than a std::unordered_map because we don't have standard library support
     CommandDefinition* m_command_map{nullptr};
     IMotorController* m_p_controller;
 
