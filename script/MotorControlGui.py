@@ -27,7 +27,6 @@ class MotorControlGUI:
         self.left_target_speed_data = []
         self.right_target_speed_data = []
 
-        
         self.create_scale("Left Speed", self.left_speed, -SPEED_RANGE_CPS, SPEED_RANGE_CPS, row=0)
         self.create_scale("Right Speed", self.right_speed, -SPEED_RANGE_CPS, SPEED_RANGE_CPS, row=1)
 

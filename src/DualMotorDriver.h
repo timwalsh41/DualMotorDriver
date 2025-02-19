@@ -6,7 +6,7 @@
 using PWM = uint8_t;
 
 // Global limit for PWM values
-constexpr PWM MAX_PWM_VALUE = 175;
+constexpr PWM MAX_PWM_VALUE = UINT8_MAX;
 
 // Pin definitions
 #define ENCODER_LEFT_CHANNEL_A    2

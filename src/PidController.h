@@ -4,8 +4,8 @@
 #include "Encoder.h"
 #include "stddef.h"
 
-#define SPEED_SAMPLE_BUFFER_LENGTH 80
-#define PWM_SAMPLE_BUFFER_LENGTH 80
+#define SPEED_SAMPLE_BUFFER_LENGTH 5
+#define PWM_SAMPLE_BUFFER_LENGTH 16
 
 enum ControlMode
 {

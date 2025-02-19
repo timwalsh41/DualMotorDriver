@@ -6,7 +6,7 @@
 #include "SerialInterface.h"
 #include "Utility.h"
 
-constexpr float PID_LOOP_TIME_MS = 2;
+constexpr float PID_LOOP_TIME_MS = 1;
 
 Encoder left_channel_encoder;
 Encoder right_channel_encoder;

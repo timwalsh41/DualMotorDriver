@@ -33,6 +33,8 @@ def prepare_plot():
     rtp.set_axis_ylimit(1,0,[-10000, 10000])
 
     rtp.add_button("Exit", exit_demo)
+    rtp.add_button("Set speed", lambda event: commander.set_target_speeds(1000, 1000))
+    rtp.add_button("Zero speed", lambda event: commander.set_target_speeds(0, 0))
     rtp.add_label(width=7, caption='My label')
     
     return rtp
