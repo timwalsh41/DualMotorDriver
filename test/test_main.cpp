@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_open_loop_control_calculation);
     RUN_TEST(test_proportional_closed_loop_control);
     RUN_TEST(test_integral_closed_loop_control);
+    RUN_TEST(test_feedforward_control);
 
     return UNITY_END();
 }

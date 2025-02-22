@@ -19,6 +19,7 @@ typedef struct
   float kP{0.};
   float kI{0.};
   float kD{0.};
+  float kFF{0.};
 
   bool enabled{false};
   bool fault{false};
@@ -36,7 +37,7 @@ class IMotorController
     virtual void set_target_speed(MotorChannel channel, float speed_cps) = 0;
     virtual void clear_encoders() = 0;
     virtual const SystemStatus& get_status() const = 0;
-    virtual void set_pid_gains(float kP, float kI, float kD) = 0;
+    virtual void set_pid_gains(float kP, float kI, float kD, float kFF) = 0;
 };
 
 class MotorController : public IMotorController
@@ -55,7 +56,7 @@ class MotorController : public IMotorController
     void set_mode(ControlMode mode) override;
     void set_target_speed(MotorChannel channel, float speed_cps) override;
     void clear_encoders() override;
-    void set_pid_gains(float kP, float kI, float kD) override;
+    void set_pid_gains(float kP, float kI, float kD, float kFF) override;
 
   private:
     Encoder *m_p_left_encoder, *m_p_right_encoder;

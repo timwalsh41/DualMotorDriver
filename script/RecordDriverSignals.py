@@ -9,13 +9,16 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-Kp = 0.4    
-Ki = 0
-Kd = 0
+Kp = 0.2
+Ki = 0.008
+Kd = 0.1
+Kff = 1.0
 
-target_velocity_cps = 1500
-step_time_s = 0.1     # time to record before sending the step input
-run_time_s = 2      # time to record after sending the step input
+initial_target_velocity_cps = 1250
+final_target_velocity_cps = 4500
+
+step_time_s = 0.5    # time to record before sending the step input
+run_time_s = 3      # time to record after sending the step input
 
 port = '/dev/ttyUSB0'
 baud_rate = 115200
@@ -23,7 +26,7 @@ baud_rate = 115200
 array_size = 2000
 
 commander = DualMotorCommander(port, baud_rate)
-commander.set_pid_gains(Kp, Ki, Kd)
+commander.set_pid_gains(Kp, Ki, Kd, Kff)
 commander.set_target_speeds(0, 0)
 commander.enable_driver()
 
@@ -59,18 +62,20 @@ def record_values(target, idx):
     idx += 1
 
 idx = 0
+
+commander.set_target_speeds(initial_target_velocity_cps, initial_target_velocity_cps)
 start_time = time.time()
 while time.time() - start_time < step_time_s:
-    record_values(0, idx)
+    record_values(initial_target_velocity_cps, idx)
     idx += 1
 
-commander.set_target_speeds(target_velocity_cps, 0)
-
+commander.set_target_speeds(final_target_velocity_cps, 0)
 while time.time() - start_time < (step_time_s + run_time_s):
-    record_values(target_velocity_cps, idx)
+    record_values(final_target_velocity_cps, idx)
     idx += 1
 
 commander.set_target_speeds(0, 0)
+time.sleep(0.2)
 commander.disable_driver()
 
 dt = np.mean(time_vals[1:10] - time_vals[:9])

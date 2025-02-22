@@ -3,6 +3,8 @@
 
 #include "stdint.h"
 
+constexpr float PID_LOOP_TIME_MS = 1;
+
 using PWM = uint8_t;
 
 // Global limit for PWM values

@@ -25,7 +25,6 @@ void MotorController::update_controller()
   m_system_status.left_encoder_counts = m_p_left_encoder->get_count();
   m_system_status.left_motor_pwm = target_pwm;
 
-  
   target_pwm = update_pid_channel(m_p_right_pid_controller, MotorChannel::RIGHT);
   m_system_status.right_motor_current_speed_cps = m_p_right_pid_controller->get_current_speed_cps();
   m_system_status.right_encoder_counts = m_p_right_encoder->get_count();
@@ -79,19 +78,31 @@ void MotorController::clear_encoders()
   m_p_right_encoder->reset_count();
 }
 
-void MotorController::set_pid_gains(float kP, float kI, float kD)
+void MotorController::set_pid_gains(float kP, float kI, float kD, float kFF)
 {
-  m_p_left_pid_controller->set_kP(kP);
-  m_p_left_pid_controller->set_kI(kI);
-  m_p_left_pid_controller->set_kD(kD);
+  if (m_p_left_pid_controller->set_kP(kP))
+  {
+    m_system_status.kP = kP;
+    m_p_right_pid_controller->set_kP(kP);
+  }
+  
+  if (m_p_left_pid_controller->set_kI(kI))
+  {
+    m_system_status.kI = kI;
+    m_p_right_pid_controller->set_kI(kI);
+  }
 
-  m_p_right_pid_controller->set_kP(kP);
-  m_p_right_pid_controller->set_kI(kI);
-  m_p_right_pid_controller->set_kD(kD);
+  if (m_p_left_pid_controller->set_kD(kD))
+  {
+    m_system_status.kD = kD;
+    m_p_right_pid_controller->set_kD(kD);
+  }
 
-  m_system_status.kP = kP;
-  m_system_status.kI = kI;
-  m_system_status.kD = kD;
+  if (m_p_left_pid_controller->set_kFF(kFF))
+  {
+    m_system_status.kFF = kFF;
+    m_p_right_pid_controller->set_kFF(kFF);
+  }
 }
 
 PWM MotorController::update_pid_channel(PidController* p_pid_controller, MotorChannel channel)

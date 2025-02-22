@@ -27,9 +27,6 @@ typedef struct
   CommandCallback callback;
 } CommandDefinition;
 
-#define NUM_COMMANDS 12
-#define SERIAL_BUFFER_SIZE 16
-
 class SerialInterface
 {
   public:
@@ -60,7 +57,10 @@ class SerialInterface
 
     static constexpr uint32_t SERIAL_TIMEOUT_MS = 4;
 
-    static constexpr size_t PAYLOAD_BUFFER_POOL_SIZE = 16;
+    static constexpr size_t NUM_COMMANDS = 12;
+    static constexpr size_t SERIAL_BUFFER_SIZE = 24;
+    static constexpr size_t PAYLOAD_BUFFER_POOL_SIZE = 24;
+    static constexpr size_t OUTBOUND_PACKET_BUFFER_POOL_SIZE = 24;
 
   private:
     void build_command_map();

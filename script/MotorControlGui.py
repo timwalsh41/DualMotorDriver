@@ -73,19 +73,23 @@ class MotorControlGUI:
         self.kp = tk.DoubleVar(value=0)
         self.ki = tk.DoubleVar(value=0)
         self.kd = tk.DoubleVar(value=0)
+        self.kff = tk.DoubleVar(value=0)
 
         self.create_entry("Kp", self.kp, row=8)
         self.create_entry("Ki", self.ki, row=9)
         self.create_entry("Kd", self.kd, row=10)
-        tk.Button(self._master, text="Set PID Gains", command=lambda: self.pending_commands.append('set_pid_gains')).grid(row=11, column=0, columnspan=2)
+        self.create_entry("Kff", self.kff, row=11)
+        tk.Button(self._master, text="Set PID Gains", command=lambda: self.pending_commands.append('set_pid_gains')).grid(row=12, column=0, columnspan=2)
 
         # PID Gains Display
         self.kp_display = tk.Label(self._master, text="Kp: 0.0")
-        self.kp_display.grid(row=12, column=0, columnspan=2)
+        self.kp_display.grid(row=13, column=0, columnspan=2)
         self.ki_display = tk.Label(self._master, text="Ki: 0.0")
-        self.ki_display.grid(row=13, column=0, columnspan=2)
+        self.ki_display.grid(row=14, column=0, columnspan=2)
         self.kd_display = tk.Label(self._master, text="Kd: 0.0")
-        self.kd_display.grid(row=14, column=0, columnspan=2)
+        self.kd_display.grid(row=15, column=0, columnspan=2)
+        self.kff_display = tk.Label(self._master, text="Kff: 0.0")
+        self.kff_display.grid(row=16, column=0, columnspan=2)
 
         # Handle window close event
         self._master.protocol("WM_DELETE_WINDOW", self.exit_program)
@@ -134,7 +138,9 @@ class MotorControlGUI:
         kp = self.kp.get()
         ki = self.ki.get()
         kd = self.kd.get()
-        success = self.controller.set_pid_gains(kp, ki, kd)
+        kff = self.kff.get()
+
+        success = self.controller.set_pid_gains(kp, ki, kd, kff)
         self.check_status(success, "Set PID Gains")
 
     def exit_program(self):
@@ -209,6 +215,7 @@ class MotorControlGUI:
                 self.kp_display.config(text=f"Kp: {pid_gains[0]:.4f}")
                 self.ki_display.config(text=f"Ki: {pid_gains[1]:.4f}")
                 self.kd_display.config(text=f"Kd: {pid_gains[2]:.4f}")
+                self.kff_display.config(text=f"Kff: {pid_gains[3]:.4f}")
             self.check_status(success, "Get PID Gains")
 
             self.update_plot()

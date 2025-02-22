@@ -82,7 +82,11 @@ void SerialInterface::process_commands()
     if (result)
     {
       command_byte |= SUCCESS_BIT;
-      uint8_t outbound_packet[20];
+
+      // BEWARE: we are creating a memory pool here to store the outbound packet, we need to ensure that the
+      // packet is never larger than the pool size. The outbound packet includes the command byte, the response
+      // length, the response payload, and the 2-byte CRC
+      uint8_t outbound_packet[OUTBOUND_PACKET_BUFFER_POOL_SIZE];
 
       outbound_packet[0] = command_byte;
       outbound_packet[1] = incoming_command->response_length;
@@ -182,9 +186,10 @@ bool SerialInterface::get_command_definition(CommandDefinition** command)
 
 void SerialInterface::build_command_map()
 {
-  // BEWARE: we are creating a memory pool here to hold the outbound payoad populated by the command callback
-  // function, we need to ensure that the payload is never larger than the pool size
-  // Update the pool size in the SerialInterface class definition as needed
+  // BEWARE: we are creating a memory pool above to hold the outbound payoad populated
+  // by the command callback function, we need to ensure that the payload is never larger
+  // than the pool size. Update the pool size in the SerialInterface class definition as
+  // needed.
 
   size_t map_idx = 0;
 
@@ -325,17 +330,18 @@ void SerialInterface::build_command_map()
   map_idx++;
 
   // SET PID GAINS
-  // Incoming payload length: 12
+  // Incoming payload length: 16
   // Payload[0:3]: K_p, float
   // Payload[4:7]: K_i, float
   // Payload[8:11]: K_d, float
+  // Payload[12:15]: K_ff, float
   // No outgoing payload
   m_command_map[map_idx].command = CMD_SET_PID_GAINS;
-  m_command_map[map_idx].payload_length = 12;
+  m_command_map[map_idx].payload_length = 16;
   m_command_map[map_idx].response_length = 0;
   m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
-      p_controller->set_pid_gains(bytes_to_float(&incoming_payload[0]), bytes_to_float(&incoming_payload[4]), bytes_to_float(&incoming_payload[8]));
+      p_controller->set_pid_gains(bytes_to_float(&incoming_payload[0]), bytes_to_float(&incoming_payload[4]), bytes_to_float(&incoming_payload[8]), bytes_to_float(&incoming_payload[12]));
 
       return true;
     };
@@ -343,18 +349,20 @@ void SerialInterface::build_command_map()
 
   // GET PID GAINS
   // No incoming payload
-  // Outgoing payload length: 12
+  // Outgoing payload length: 16
   // Payload[0:3]: K_p, float
   // Payload[4:7]: K_i, float
   // Payload[8:11]: K_d, float
+  // Payload[12:15]: K_ff, float
   m_command_map[map_idx].command = CMD_GET_PID_GAINS;
   m_command_map[map_idx].payload_length = 0;
-  m_command_map[map_idx].response_length = 12;
+  m_command_map[map_idx].response_length = 16;
   m_command_map[map_idx].callback = [](Command& command, uint8_t* incoming_payload, size_t incoming_payload_length, uint8_t* outgoing_payload, IMotorController* p_controller)
     {
       float_to_bytes(p_controller->get_status().kP, &outgoing_payload[0]);
       float_to_bytes(p_controller->get_status().kI, &outgoing_payload[4]);
       float_to_bytes(p_controller->get_status().kD, &outgoing_payload[8]);
+      float_to_bytes(p_controller->get_status().kFF, &outgoing_payload[12]);
 
       return true;
     };

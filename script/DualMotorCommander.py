@@ -6,9 +6,10 @@ import time
 
 SERIAL_DELAY_TIME_S = 0.01
 
-# format string for byte packing, little-endian, 2 4-byte floats
+# format string for byte packing, little-endian, multiple 4-byte floats
 DUAL_FLOAT_PACK_FMT = '<ff'
 TRIPLE_FLOAT_PACK_FMT = '<fff'
+QUAD_FLOAT_PACK_FMT = '<ffff'
 
 # format string for byte packing, little-endian, 2 4-byte signed integers
 DUAL_INT32_PACK_FMT = '<ll'
@@ -102,15 +103,15 @@ class DualMotorCommander:
 
         return (False, [])
     
-    def set_pid_gains(self, kp: float, ki: float, kd: float):
-        payload = pack(TRIPLE_FLOAT_PACK_FMT, kp, ki, kd)
+    def set_pid_gains(self, kp: float, ki: float, kd: float, kff: float = 1):
+        payload = pack(QUAD_FLOAT_PACK_FMT, kp, ki, kd, kff)
         return self._execute_command(CommandInterface.CommandDefinitionMap[CommandInterface.CMD_SET_PID_GAINS], payload)[0]
     
     def get_pid_gains(self):
         result = self._execute_command(CommandInterface.CommandDefinitionMap[CommandInterface.CMD_GET_PID_GAINS])
 
         if result[0]:
-            pid_gains = unpack(TRIPLE_FLOAT_PACK_FMT, result[1])
+            pid_gains = unpack(QUAD_FLOAT_PACK_FMT, result[1])
             return (True, pid_gains)
 
         return (False, [])

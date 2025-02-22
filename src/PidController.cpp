@@ -8,13 +8,22 @@ PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder
       m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, 
       m_p_encoder{p_encoder}
 {
-  for (uint32_t i = 0; i < SPEED_SAMPLE_BUFFER_LENGTH; i++)
+  // TODO: load via argument
+  m_K_ff = 1;
+
+  for (size_t i = 0; i < SPEED_SAMPLE_BUFFER_LENGTH; i++)
   {
     m_speed_sample_buffer[i] = 0;
   }
-  for (uint32_t i = 0; i < PWM_SAMPLE_BUFFER_LENGTH; i++)
+
+  for (size_t i = 0; i < PWM_SAMPLE_BUFFER_LENGTH; i++)
   {
     m_pwm_sample_buffer[i] = 0;
+  }
+
+  for (size_t i = 0; i < FILTERED_SPEED_BUFFER_LENGTH; i++)
+  {
+    m_filtered_speed_buffer[i] = 0;
   }
 }
 
@@ -26,29 +35,45 @@ float PidController::run_controller()
   // value
   update_current_speed();
 
+  // apply target velocity ramp, if needed
+  if (m_current_target_speed_cps < m_final_target_speed_cps)
+  {
+    m_current_target_speed_cps += SPEED_RAMP_RATE_CPS_PER_MS*PID_LOOP_TIME_MS;
+    if (m_current_target_speed_cps > m_final_target_speed_cps)
+      m_current_target_speed_cps = m_final_target_speed_cps;
+  }
+  else if (m_current_target_speed_cps > m_final_target_speed_cps)
+  {
+    m_current_target_speed_cps -= SPEED_RAMP_RATE_CPS_PER_MS*PID_LOOP_TIME_MS;
+    if (m_current_target_speed_cps < m_final_target_speed_cps)
+      m_current_target_speed_cps = m_final_target_speed_cps;
+  }
+
   if (m_mode == CLOSED_LOOP)
   {
     float control_signal;
 
-    float error = m_target_speed_cps - m_current_speed_cps;
-    update_accumulated_error(error);
+    // update error values
+    float error = m_current_target_speed_cps - m_current_speed_cps;
+    float filtered_error = m_current_target_speed_cps - m_filtered_speed_cps;
+    update_accumulated_error(filtered_error);
     m_differential_error = error - m_last_error;
 
-    control_signal = m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
+    control_signal = m_K_ff*CONTROL_SPEED_RATIO*m_current_target_speed_cps + m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
     m_last_error = error;
 
-    // std::cout << "target = " << m_target_speed_cps << " current = " << m_current_speed_cps << " error = " << error << " raw control = " << control_signal;;
+    // std::cout << "target = " << m_current_target_speed_cps << " current = " << m_current_speed_cps << " error = " << error << " raw control = " << control_signal;;
 
     // Update the filtered control signal
     update_filtered_pwm(control_signal);
 
-    // std::cout << " clamped control " << control_signal << " filtered control " << m_filtered_pwm << std::endl;
+    // std::cout << " filtered control " << m_filtered_pwm << std::endl;
 
     return m_filtered_pwm;
   }
   else
   {
-    return CONTROL_SPEED_RATIO*m_target_speed_cps;
+    return CONTROL_SPEED_RATIO*m_current_target_speed_cps;
   }
 }
 
@@ -66,6 +91,12 @@ void PidController::update_current_speed()
 
   if (m_speed_sample_buffer_ptr >= SPEED_SAMPLE_BUFFER_LENGTH)
     m_speed_sample_buffer_ptr = 0;
+
+  m_filtered_speed_cps += (m_current_speed_cps - m_filtered_speed_buffer[m_filtered_speed_buffer_ptr])/FILTERED_SPEED_BUFFER_LENGTH;
+  m_filtered_speed_buffer[m_filtered_speed_buffer_ptr++] = m_current_speed_cps;
+
+  if (m_filtered_speed_buffer_ptr >= FILTERED_SPEED_BUFFER_LENGTH)
+    m_filtered_speed_buffer_ptr = 0;
 }
 
 // This function calculates the instantaneous speed. Note that since calling Encoder::get_delta()
@@ -84,7 +115,7 @@ float PidController::get_instantaneous_speed()
 // When setting target speed, we'll clear the accumulated error
 void PidController::set_target_speed(float target_speed_cps)
 {
-  m_target_speed_cps = target_speed_cps;
+  m_final_target_speed_cps = target_speed_cps;
   m_accumulated_error = 0;
 }
 
@@ -104,22 +135,48 @@ void PidController::set_mode(ControlMode mode)
   set_target_speed(0);
 }
 
-void PidController::set_kP(float kP)
+bool PidController::set_kP(float kP)
 {
   if (kP >= 0)
+  {
     m_K_p = kP;
+    return true;
+  }
+
+  return false;
 }
 
-void PidController::set_kI(float kI)
+bool PidController::set_kI(float kI)
 {
   if (kI >= 0)
+  {
     m_K_i = kI;
+    return true;
+  }
+
+  return false;
 }
 
-void PidController::set_kD(float kD)
+bool PidController::set_kD(float kD)
 {
   if (kD >= 0)
+  {
     m_K_d = kD;
+    return true;
+  }
+
+  return false;
+}
+
+bool PidController::set_kFF(float kFF)
+{
+  if (kFF >= 0 && kFF <= 1)
+  {
+    m_K_ff = kFF;
+    return true;
+  }
+
+  return false;
 }
 
 void PidController::update_filtered_pwm(float pwm_value)

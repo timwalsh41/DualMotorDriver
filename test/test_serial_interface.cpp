@@ -40,7 +40,7 @@ class MockController : public IMotorController
         }
         void clear_encoders() override { m_system_status.left_encoder_counts = m_system_status.right_encoder_counts = 0; }
         const SystemStatus& get_status() const override {return m_system_status;}
-        void set_pid_gains(float kP, float kI, float kD) override {m_system_status.kP = kP; m_system_status.kI = kI; m_system_status.kD = kD;}
+        void set_pid_gains(float kP, float kI, float kD, float kFF) override {m_system_status.kP = kP; m_system_status.kI = kI; m_system_status.kD = kD; m_system_status.kFF = kFF;}
 
         // some extra functions required for test
         bool is_closed_loop_mode() const {return m_system_status.mode == ControlMode::CLOSED_LOOP;}
@@ -397,16 +397,18 @@ void test_set_get_pid_gains()
     float kP = 1.23f;
     float kI = 4.56f;
     float kD = 7.89f;
+    float kFF = 0.5f;
 
     // Set the PID gains
-    uint8_t set_gains_command[15];
+    uint8_t set_gains_command[19];
     set_gains_command[0] = SerialInterface::CMD_SET_PID_GAINS;
     memcpy(&set_gains_command[1], &kP, sizeof(float));
     memcpy(&set_gains_command[5], &kI, sizeof(float));
     memcpy(&set_gains_command[9], &kD, sizeof(float));
-    uint16_t crc = calcCRC16(set_gains_command, 13);
-    set_gains_command[13] = static_cast<uint8_t>(crc >> 8);
-    set_gains_command[14] = static_cast<uint8_t>(crc & 0xFF);
+    memcpy(&set_gains_command[13], &kFF, sizeof(float));
+    uint16_t crc = calcCRC16(set_gains_command, 17);
+    set_gains_command[17] = static_cast<uint8_t>(crc >> 8);
+    set_gains_command[18] = static_cast<uint8_t>(crc & 0xFF);
 
     Serial.load_read_buffer(set_gains_command, sizeof(set_gains_command));
     interface.process_commands();
@@ -414,7 +416,7 @@ void test_set_get_pid_gains()
     interface.process_commands();
 
     // Check the response
-    uint8_t response[20];       // size 20 for the 16 byte read response below
+    uint8_t response[20];       // size 20 for the read response test below
     size_t resp_len = Serial.retrieve_write_buffer(response, sizeof(response));
     TEST_ASSERT_EQUAL(4, resp_len);
     TEST_ASSERT_EQUAL(SerialInterface::CMD_SET_PID_GAINS | SerialInterface::ACK_BIT | SerialInterface::SUCCESS_BIT, response[0]);
@@ -423,6 +425,7 @@ void test_set_get_pid_gains()
     TEST_ASSERT_FLOAT_WITHIN(0.01f, kP, controller.get_status().kP);
     TEST_ASSERT_FLOAT_WITHIN(0.01f, kI, controller.get_status().kI);
     TEST_ASSERT_FLOAT_WITHIN(0.01f, kD, controller.get_status().kD);
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kFF, controller.get_status().kFF);
 
     // Get the PID gains
     uint8_t get_gains_command[3];
@@ -438,9 +441,9 @@ void test_set_get_pid_gains()
 
     // Check the response
     resp_len = Serial.retrieve_write_buffer(response, sizeof(response));
-    TEST_ASSERT_EQUAL(16, resp_len);
+    TEST_ASSERT_EQUAL(20, resp_len);
     TEST_ASSERT_EQUAL(SerialInterface::CMD_GET_PID_GAINS | SerialInterface::ACK_BIT | SerialInterface::SUCCESS_BIT, response[0]);
-    TEST_ASSERT_EQUAL(12, response[1]);  // payload length
+    TEST_ASSERT_EQUAL(16, response[1]);  // payload length
 
     float k;
     memcpy(&k, &response[2], sizeof(float));
@@ -449,8 +452,10 @@ void test_set_get_pid_gains()
     TEST_ASSERT_FLOAT_WITHIN(0.01f, kI, k);
     memcpy(&k, &response[10], sizeof(float));
     TEST_ASSERT_FLOAT_WITHIN(0.01f, kD, k);
+    memcpy(&k, &response[14], sizeof(float));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, kFF, k);
 
-    TEST_ASSERT_EQUAL(calcCRC16(response, 14), (response[14] << 8) | response[15]);
+    TEST_ASSERT_EQUAL(calcCRC16(response, 18), (response[18] << 8) | response[19]);
 }
 
 void test_get_pwm()
