@@ -1,5 +1,6 @@
 #include <unity.h>
 #include <PidController.h>
+#include <Encoder.h>
 #include <DualMotorDriver.h>
 #include <thread>
 
@@ -9,6 +10,7 @@ PidController* pid_controller{nullptr};
 static constexpr float kP = 10.;
 static constexpr float kI = 0.;
 static constexpr float kD = 0.;
+static constexpr float kFF = 0.;
 
 // A NOTE ON TIMING
 // We have a few competing timing concerns here. One the one hand, we have some elements of the
@@ -23,7 +25,7 @@ static constexpr float kD = 0.;
 
 void pid_test_setup()
 {
-    pid_controller = new PidController(kP, kI, kD, &encoder);
+    pid_controller = new PidController(kP, kI, kD, kFF, &encoder);
 }
 
 void pid_test_teardown()

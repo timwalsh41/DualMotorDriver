@@ -9,8 +9,8 @@
 Encoder left_channel_encoder;
 Encoder right_channel_encoder;
 
-PidController pid_controller_left(0.1, 0, 0, &left_channel_encoder);
-PidController pid_controller_right(0.1, 0, 0, &right_channel_encoder);
+PidController pid_controller_left(0.1, 0., 0., 1., &left_channel_encoder);
+PidController pid_controller_right(0.1, 0., 0., 1., &right_channel_encoder);
 
 MotorController controller(&left_channel_encoder, &right_channel_encoder, &pid_controller_left, &pid_controller_right);
 

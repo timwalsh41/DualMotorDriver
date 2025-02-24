@@ -1,2 +1,5 @@
 script/__pycache__/
 .pio/build/
+model/*.so
+model/build/
+model/__pycache__/

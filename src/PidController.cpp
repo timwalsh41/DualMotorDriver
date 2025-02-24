@@ -2,15 +2,11 @@
 #include "PidController.h"
 #include "Utility.h"
 #include "DualMotorDriver.h"
-// #include <iostream>
 
-PidController::PidController(float K_p, float K_i, float K_d, Encoder *p_encoder) : 
-      m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, 
+PidController::PidController(float K_p, float K_i, float K_d, float K_ff, IEncoder *p_encoder) :
+      m_K_p{K_p}, m_K_i{K_i}, m_K_d{K_d}, m_K_ff{K_ff},
       m_p_encoder{p_encoder}
 {
-  // TODO: load via argument
-  m_K_ff = 1;
-
   for (size_t i = 0; i < SPEED_SAMPLE_BUFFER_LENGTH; i++)
   {
     m_speed_sample_buffer[i] = 0;
@@ -62,12 +58,8 @@ float PidController::run_controller()
     control_signal = m_K_ff*CONTROL_SPEED_RATIO*m_current_target_speed_cps + m_K_p*error + m_K_i*m_accumulated_error + m_K_d*m_differential_error;
     m_last_error = error;
 
-    // std::cout << "target = " << m_current_target_speed_cps << " current = " << m_current_speed_cps << " error = " << error << " raw control = " << control_signal;;
-
     // Update the filtered control signal
     update_filtered_pwm(control_signal);
-
-    // std::cout << " filtered control " << m_filtered_pwm << std::endl;
 
     return m_filtered_pwm;
   }

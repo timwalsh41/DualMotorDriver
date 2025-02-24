@@ -9,21 +9,21 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-Kp = 0.2
-Ki = 0.008
-Kd = 0.1
+Kp = 0.
+Ki = 0.0002
+Kd = 0.
 Kff = 1.0
 
-initial_target_velocity_cps = 1250
-final_target_velocity_cps = 4500
+initial_target_velocity_cps = 0
+final_target_velocity_cps = 2500
 
 step_time_s = 0.5    # time to record before sending the step input
-run_time_s = 3      # time to record after sending the step input
+run_time_s = 10      # time to record after sending the step input
 
 port = '/dev/ttyUSB0'
 baud_rate = 115200
 
-array_size = 2000
+array_size = 200
 
 commander = DualMotorCommander(port, baud_rate)
 commander.set_pid_gains(Kp, Ki, Kd, Kff)

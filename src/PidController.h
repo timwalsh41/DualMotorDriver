@@ -1,7 +1,7 @@
 #ifndef PIDCONTROLLER_H
 #define PIDCONTROLLER_H
 
-#include "Encoder.h"
+#include "IEncoder.h"
 #include "stddef.h"
 
 #define SPEED_SAMPLE_BUFFER_LENGTH 5      // buffer length for "real-time" speed used for P-gain calculation
@@ -17,7 +17,7 @@ enum ControlMode
 class PidController
 {
   public:
-    PidController(float K_p, float K_i, float K_d, Encoder *p_encoder);
+    PidController(float K_p, float K_i, float K_d, float K_ff, IEncoder *p_encoder);
     ~PidController() {}
 
     float run_controller();
@@ -30,6 +30,7 @@ class PidController
     float get_kD() const {return m_K_d;}
     float get_kFF() const {return m_K_ff;}
     float get_target_speed_cps() const {return m_current_target_speed_cps;}
+    float get_accumulated_error() const {return m_accumulated_error;}
 
     bool set_kP(float kP);
     bool set_kI(float kI);
@@ -47,7 +48,11 @@ class PidController
     // the ratio of control signal to speed for open-loop unloaded operation
     static constexpr float CONTROL_SPEED_RATIO = static_cast<float>(UINT8_MAX)/MAX_SPEED_CPS;
 
-    static constexpr float MAX_ACCUMULATED_ERROR = 100000.;
+    // The maximum accumulated error. To set this, consider what the maximum impact on the
+    // control signal will be given the integral gain. In the future this could be parameterized
+    // differently, e.g. set a maximum control signal contribution from the integral gain term, 
+    // and then set this value every time the integral gain is updated.
+    static constexpr float MAX_ACCUMULATED_ERROR = 10000000.;
 
     static constexpr float SPEED_RAMP_RATE_CPS_PER_MS = 50;
 
@@ -85,7 +90,7 @@ class PidController
     float m_filtered_speed_buffer[FILTERED_SPEED_BUFFER_LENGTH];  
     size_t m_filtered_speed_buffer_ptr{0};
 
-    Encoder *m_p_encoder;
+    IEncoder *m_p_encoder;
 
     float m_pwm_sample_buffer[PWM_SAMPLE_BUFFER_LENGTH];
     size_t m_pwm_sample_buffer_ptr{0};
